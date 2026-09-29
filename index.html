@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toolbox — offline file tools</title>
+<style>
+  :root{
+    --page: #FBF9F4;
+    --ink: #201A12;
+    --ink-soft: #6B6153;
+
+    --indigo-a: #2E2A52;
+    --indigo-b: #433C74;
+    --cream: #F5EFE1;
+
+    --gold-a: #E7A93C;
+    --gold-b: #F2C169;
+    --brown: #2B1E0F;
+
+    --teal-a: #1F5C52;
+    --teal-b: #2E8577;
+    --mint: #EAF3E8;
+
+    --rose-a: #7A2E3D;
+    --rose-b: #A64B5C;
+    --blush: #F7E9EB;
+
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  header{
+    padding: 40px 0 8px;
+  }
+
+  .brand{
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-style: italic;
+    margin: 0 0 34px;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(34px, 5.6vw, 64px);
+    line-height: 1.06;
+    letter-spacing: -0.01em;
+    margin: 0 0 18px;
+    max-width: 16ch;
+  }
+
+  .lede{
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 44ch;
+    margin: 0 0 46px;
+  }
+
+  .panels{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
+    padding-bottom: 20px;
+  }
+
+  .tool-group{ margin-bottom: 34px; }
+  .group-heading{ margin-bottom: 18px; }
+  .group-heading h2{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 30px;
+    margin: 0 0 4px;
+  }
+  .group-heading p{ margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+
+  .panel{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 460px;
+    padding: 34px 32px 30px;
+    border-radius: 22px;
+    text-decoration: none;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .panel.pdf{
+    background: radial-gradient(140% 120% at 85% 0%, var(--gold-b) 0%, var(--gold-a) 60%);
+    color: var(--brown);
+  }
+
+  .panel.image{
+    background: radial-gradient(140% 120% at 85% 0%, var(--teal-b) 0%, var(--teal-a) 60%);
+    color: var(--mint);
+  }
+
+  .panel.alt-indigo{
+    background: radial-gradient(140% 120% at 85% 0%, var(--indigo-b) 0%, var(--indigo-a) 60%);
+    color: var(--cream);
+  }
+
+  .panel.alt-teal{
+    background: radial-gradient(140% 120% at 85% 0%, var(--teal-b) 0%, var(--teal-a) 60%);
+    color: var(--mint);
+  }
+
+  .panel.alt-rose{
+    background: radial-gradient(140% 120% at 85% 0%, var(--rose-b) 0%, var(--rose-a) 60%);
+    color: var(--blush);
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .panel{ transition: transform 220ms ease, box-shadow 220ms ease; }
+    .panel:hover{ transform: translateY(-4px); }
+    .panel .art{ transition: transform 260ms ease; }
+    .panel:hover .art{ transform: scale(1.035); }
+  }
+
+  .panel:hover{
+    box-shadow: 0 18px 34px -18px rgba(32,26,18,0.35);
+  }
+
+  .panel .index{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 15px;
+    opacity: 0.75;
+  }
+
+  .art{
+    width: 100%;
+    max-width: 300px;
+    margin: 10px auto;
+  }
+  .art svg{ width: 100%; height: auto; display: block; }
+
+  .panel h2{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 30px;
+    margin: 0 0 10px;
+  }
+
+  .panel p{
+    margin: 0 0 26px;
+    font-size: 15px;
+    max-width: 34ch;
+  }
+  .panel.pdf p{ color: #4A3413; }
+  .panel.image p{ color: #CFE4DC; }
+  .panel.alt-indigo p{ color: #D9D3E8; }
+  .panel.alt-teal p{ color: #CFE4DC; }
+  .panel.alt-rose p{ color: #EAD1D6; }
+
+  .cta{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 999px;
+    width: fit-content;
+  }
+  .panel.pdf .cta{ background: var(--brown); color: var(--gold-b); }
+  .panel.image .cta{ background: var(--mint); color: var(--teal-a); }
+  .panel.alt-indigo .cta{ background: var(--cream); color: var(--indigo-a); }
+  .panel.alt-teal .cta{ background: var(--mint); color: var(--teal-a); }
+  .panel.alt-rose .cta{ background: var(--blush); color: var(--rose-a); }
+
+  .cta .dot{
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .more{
+    margin: 6px 0 0;
+    padding: 22px 26px;
+    border-radius: 18px;
+    border: 1.5px dashed #D8D0BE;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+  }
+  .more strong{ color: var(--ink); font-weight: 600; }
+
+  footer{
+    margin-top: 34px;
+    padding: 22px 0 44px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  a:focus-visible{
+    outline: 2px solid var(--indigo-a);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 640px){
+    .panel{ min-height: 400px; }
+  }
+
+  @media (max-width: 480px){
+    .wrap{ padding: 0 18px; }
+    header{ padding-top: 28px; }
+    .panel{ padding: 28px 22px 26px; border-radius: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <p class="brand">Toolbox</p>
+    <h1>Handle your files without handing them over.</h1>
+    <p class="lede">Seven tools that run entirely on your device. Nothing you open here is ever uploaded anywhere.</p>
+  </header>
+
+  <section class="tool-group" aria-labelledby="pdf-tools-heading">
+    <div class="group-heading">
+      <h2 id="pdf-tools-heading">PDF tools</h2>
+      <p>Merge, split, compress, or convert PDF documents.</p>
+    </div>
+    <div class="panels">
+
+    <a class="panel pdf" href="Tools/merge-pdf.html">
+      <div class="index">01</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#2B1E0F" stroke-width="1.6" fill="none">
+            <path d="M42 26 H108 L126 44 V126 H42 Z"></path>
+            <path d="M108 26 V44 H126"></path>
+            <path d="M174 52 H240 L258 70 V152 H174 Z"></path>
+            <path d="M240 52 V70 H258"></path>
+            <path d="M132 91 H164" marker-end="url(#merge-arrow)"></path>
+            <path d="M58 72 H110"></path>
+            <path d="M58 91 H100"></path>
+            <path d="M190 98 H242"></path>
+            <path d="M190 117 H230"></path>
+          </g>
+          <defs>
+            <marker id="merge-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0 0 L8 4 L0 8 Z" fill="#2B1E0F"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div>
+        <h2>Merge PDF</h2>
+        <p>Combine multiple PDFs into one document and arrange the pages in the order you need.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    <a class="panel pdf alt-indigo" href="Tools/split-pdf.html">
+      <div class="index">02</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#F5EFE1" stroke-width="1.6" fill="none">
+            <path d="M82 18 H162 L184 40 V170 H82 Z"></path>
+            <path d="M162 18 V40 H184"></path>
+            <line x1="100" y1="68" x2="166" y2="68"></line>
+            <line x1="100" y1="88" x2="166" y2="88"></line>
+            <line x1="100" y1="108" x2="148" y2="108"></line>
+            <path d="M64 124 H202" stroke-dasharray="5 5"></path>
+            <path d="M132 116 L140 124 L132 132"></path>
+          </g>
+          <text x="106" y="154" font-family="Georgia, serif" font-style="italic" font-size="14" fill="#F5EFE1">separate pages</text>
+        </svg>
+      </div>
+
+      <div>
+        <h2>Split PDF</h2>
+        <p>Separate a PDF by page ranges or split every page into its own file.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    <a class="panel pdf alt-rose" href="Tools/compress-pdf.html">
+      <div class="index">03</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#F7E9EB" stroke-width="1.6" fill="none">
+            <path d="M60 20 H140 L162 42 V168 H60 Z"></path>
+            <path d="M140 20 V42 H162"></path>
+            <line x1="76" y1="76" x2="146" y2="76"></line>
+            <line x1="76" y1="96" x2="146" y2="96"></line>
+            <line x1="76" y1="116" x2="120" y2="116"></line>
+
+            <path d="M190 60 H230 L242 72 V128 H190 Z" fill="#F7E9EB" opacity="0.35"></path>
+            <path d="M230 60 V72 H242"></path>
+          </g>
+          <text x="200" y="24" font-family="Georgia, serif" font-style="italic" font-size="13" fill="#F7E9EB" opacity="0.9">smaller</text>
+          <path d="M168 96 C176 96 180 96 186 96" stroke="#F7E9EB" stroke-width="1.6" fill="none" marker-end="url(#arrow)"></path>
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0 0 L8 4 L0 8 Z" fill="#F7E9EB"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div>
+        <h2>Compress PDF</h2>
+        <p>Shrink a PDF's file size while keeping the pages sharp and readable.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    <a class="panel pdf alt-teal" href="Tools/pdf-to-word.html">
+      <div class="index">04</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#EAF3E8" stroke-width="1.6" fill="none">
+            <path d="M74 18 H150 L172 40 V170 H74 Z"></path>
+            <path d="M150 18 V40 H172"></path>
+            <line x1="92" y1="68" x2="154" y2="68"></line>
+            <line x1="92" y1="88" x2="154" y2="88"></line>
+            <line x1="92" y1="108" x2="138" y2="108"></line>
+            <path d="M186 94 H220" marker-end="url(#word-arrow)"></path>
+            <rect x="226" y="66" width="48" height="56" rx="4"></rect>
+          </g>
+          <text x="233" y="101" font-family="Georgia, serif" font-weight="700" font-size="19" fill="#EAF3E8">W</text>
+          <defs>
+            <marker id="word-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0 0 L8 4 L0 8 Z" fill="#EAF3E8"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div>
+        <h2>PDF to Word</h2>
+        <p>Convert PDFs into editable Word documents, with high-accuracy OCR for scanned pages.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    <a class="panel pdf alt-indigo" href="tools/pdf_to_image.html">
+      <div class="index">05</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#F5EFE1" stroke-width="1.6" fill="none">
+            <path d="M56 18 H124 L146 40 V166 H56 Z"></path>
+            <path d="M124 18 V40 H146"></path>
+            <line x1="72" y1="72" x2="132" y2="72"></line>
+            <line x1="72" y1="92" x2="132" y2="92"></line>
+            <line x1="72" y1="112" x2="108" y2="112"></line>
+
+            <rect x="168" y="60" width="96" height="72" rx="4"></rect>
+            <circle cx="188" cy="80" r="7"></circle>
+            <path d="M174 116 L200 92 L216 104 L236 76 L258 116 Z"></path>
+          </g>
+          <path d="M150 94 C156 94 160 94 164 94" stroke="#F5EFE1" stroke-width="1.6" fill="none" marker-end="url(#arrow2)"></path>
+          <defs>
+            <marker id="arrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0 0 L8 4 L0 8 Z" fill="#F5EFE1"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div>
+        <h2>PDF to image</h2>
+        <p>Turn every page of a PDF into a high-quality PNG or JPEG, ready to download.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    </div>
+  </section>
+
+  <section class="tool-group" aria-labelledby="image-tools-heading">
+    <div class="group-heading">
+      <h2 id="image-tools-heading">Image tools</h2>
+      <p>Prepare, resize, and compress image files.</p>
+    </div>
+    <div class="panels">
+    <a class="panel image" href="Tools/photo-print-studio.html">
+      <div class="index">06</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#EAF3E8" stroke-width="1.6" fill="none">
+            <rect x="26" y="18" width="108" height="72" rx="6"></rect>
+            <rect x="166" y="18" width="108" height="72" rx="6"></rect>
+            <rect x="26" y="100" width="108" height="72" rx="6"></rect>
+            <rect x="166" y="100" width="108" height="72" rx="6"></rect>
+            <circle cx="80" cy="46" r="12"></circle>
+            <path d="M60 82 C60 62 100 62 100 82"></path>
+            <circle cx="220" cy="46" r="12"></circle>
+            <path d="M200 82 C200 62 240 62 240 82"></path>
+            <circle cx="80" cy="128" r="12"></circle>
+            <path d="M60 164 C60 144 100 144 100 164"></path>
+            <circle cx="220" cy="128" r="12"></circle>
+            <path d="M200 164 C200 144 240 144 240 164"></path>
+            <line x1="150" y1="6" x2="150" y2="184" stroke-dasharray="3 5" opacity="0.6"></line>
+            <line x1="14" y1="95" x2="286" y2="95" stroke-dasharray="3 5" opacity="0.6"></line>
+          </g>
+        </svg>
+      </div>
+
+      <div>
+        <h2>Passport photo sheet</h2>
+        <p>Upload one photo and get a print-ready A4 sheet, laid out and sized for passport copies.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    <a class="panel image alt-rose" href="tools/compress_image.html">
+      <div class="index">07</div>
+
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 300 190">
+          <g stroke="#F7E9EB" stroke-width="1.6" fill="none">
+            <rect x="20" y="20" width="140" height="104" rx="6"></rect>
+            <circle cx="52" cy="50" r="9"></circle>
+            <path d="M28 108 L64 76 L92 98 L120 66 L152 108"></path>
+
+            <rect x="188" y="46" width="80" height="60" rx="6"></rect>
+            <circle cx="208" cy="64" r="6"></circle>
+            <path d="M194 96 L216 76 L232 90 L252 68 L262 96"></path>
+          </g>
+          <path d="M164 74 C172 74 176 74 182 74" stroke="#F7E9EB" stroke-width="1.6" fill="none" marker-end="url(#arrow3)"></path>
+          <text x="188" y="132" font-family="Georgia, serif" font-style="italic" font-size="13" fill="#F7E9EB" opacity="0.9">under your KB</text>
+          <defs>
+            <marker id="arrow3" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0 0 L8 4 L0 8 Z" fill="#F7E9EB"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div>
+        <h2>Compress &amp; resize image</h2>
+        <p>Set a target file size in KB and shrink — or resize — any photo to fit under it.</p>
+        <span class="cta"><span class="dot"></span>Open tool</span>
+      </div>
+    </a>
+
+    </div>
+  </section>
+
+  <div class="more">
+    <span><strong>More tools are on the way.</strong> Background removal, format conversion, and more.</span>
+  </div>
+
+  <footer>
+    <span>No uploads. No accounts. Works offline.</span>
+    <span>v0.1</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
