@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compress PDF — Toolbox</title>
+<style>
+  :root{
+    --page: #FBF9F4;
+    --ink: #201A12;
+    --ink-soft: #6B6153;
+    --line: #E4DDCB;
+
+    --gold-a: #E7A93C;
+    --gold-b: #F2C169;
+    --brown: #2B1E0F;
+
+    --indigo: #2E2A52;
+
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+  }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+  }
+
+  header{
+    padding: 30px 0 26px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .back{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .back:hover{ text-decoration: underline; }
+
+  .badge{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(28px, 4.4vw, 40px);
+    line-height: 1.1;
+    margin: 4px 0 12px;
+  }
+
+  .lede{
+    color: var(--ink-soft);
+    font-size: 15.5px;
+    max-width: 58ch;
+    margin: 0 0 18px;
+  }
+
+  .note{
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: #FEF8EA;
+    border: 1px solid #EFDFB2;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #5A4210;
+    margin-bottom: 30px;
+  }
+  .note svg{ flex-shrink: 0; margin-top: 2px; }
+
+  /* drop zone */
+  .dropzone{
+    border: 1.5px dashed var(--line);
+    border-radius: 18px;
+    padding: 46px 24px;
+    text-align: center;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+  .dropzone.drag{
+    border-color: var(--gold-a);
+    background: #FEF8EA;
+  }
+  .dropzone .icon{
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 16px;
+  }
+  .dropzone .icon svg{ width: 100%; height: 100%; }
+  .dropzone p{ margin: 0; font-size: 15px; }
+  .dropzone .sub{ color: var(--ink-soft); font-size: 13.5px; margin-top: 6px; }
+  .dropzone strong{ color: var(--indigo); }
+  input[type="file"]{ display: none; }
+
+  /* file summary */
+  .file-row{
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    font-size: 14px;
+  }
+  .file-row.show{ display: flex; }
+  .file-name{ font-weight: 600; overflow-wrap: anywhere; }
+  .file-meta{ color: var(--ink-soft); font-size: 13px; }
+  .clear-btn{
+    border: none;
+    background: none;
+    color: var(--ink-soft);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+
+  /* settings */
+  .settings{
+    display: none;
+    margin-top: 26px;
+  }
+  .settings.show{ display: block; }
+
+  .field-label{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .target-row{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .target-row input[type="number"]{
+    width: 140px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: var(--font-body);
+  }
+  .target-row input[type="number"]:focus{
+    outline: none;
+    border-color: var(--indigo);
+  }
+  .target-row span.unit{ color: var(--ink-soft); font-size: 14px; }
+
+  .preset-row{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .preset{
+    border: 1.5px solid var(--line);
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .preset:hover{ border-color: var(--indigo); color: var(--indigo); }
+
+  .convert-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: none;
+    background: var(--indigo);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 13px 26px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-top: 22px;
+  }
+  .convert-btn:disabled{ opacity: 0.5; cursor: default; }
+  .convert-btn:not(:disabled):hover{ background: #221F42; }
+
+  /* progress */
+  .progress-wrap{
+    display: none;
+    margin-top: 22px;
+  }
+  .progress-wrap.show{ display: block; }
+  .progress-track{
+    height: 6px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill{
+    height: 100%;
+    width: 0%;
+    background: var(--gold-a);
+    transition: width 180ms ease;
+  }
+  .progress-label{
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  /* results */
+  .results{
+    display: none;
+    margin-top: 34px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #fff;
+  }
+  .results.show{ display: block; }
+
+  .results h2{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 22px;
+    margin: 0 0 14px;
+  }
+
+  .size-compare{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .size-box{
+    text-align: center;
+  }
+  .size-box .value{
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .size-box .label{
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .size-box.after .value{ color: var(--indigo); }
+  .size-arrow{
+    color: var(--ink-soft);
+    font-size: 18px;
+  }
+  .reduction-pill{
+    background: #EAF3E8;
+    color: #1F5C52;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  .missed-target{
+    background: #FEF0EE;
+    color: #7A2E1E;
+    border: 1px solid #F3CFC7;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .download-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold-a);
+    color: var(--brown);
+    border: 1px solid var(--brown);
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 11px 22px;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+  .download-btn:hover{ background: var(--gold-b); }
+
+  footer{
+    margin-top: 50px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  a:focus-visible, button:focus-visible, .dropzone:focus-visible{
+    outline: 2px solid var(--indigo);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <a class="back" href="index.html">Toolbox</a>
+    <span class="badge">Runs on your device</span>
+  </header>
+
+  <h1>Compress PDF</h1>
+  <p class="lede">Set a target file size and this shrinks a PDF to fit under it. Nothing is uploaded — the file is read and processed right here in your browser.</p>
+
+  <div class="note">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#5A4210" stroke-width="1.4"><circle cx="8" cy="8" r="6.5"></circle><line x1="8" y1="7" x2="8" y2="11.5"></line><circle cx="8" cy="4.7" r="0.6" fill="#5A4210" stroke="none"></circle></svg>
+    <span>This works by turning each page into a compressed image and rebuilding the PDF — it gets sizes down reliably, but text is no longer selectable afterward. Best for scanned documents or image-heavy PDFs.</span>
+  </div>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a PDF file">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 44 44" fill="none" stroke="#2E2A52" stroke-width="1.6">
+        <path d="M11 4 H27 L33 10 V40 H11 Z"></path>
+        <path d="M27 4 V10 H33"></path>
+        <path d="M22 20 V32 M22 32 L17 27 M22 32 L27 27"></path>
+      </svg>
+    </div>
+    <p><strong>Click to choose a PDF</strong> or drag one here</p>
+    <p class="sub">Stays on this device the whole time</p>
+    <input type="file" id="fileInput" accept="application/pdf">
+  </div>
+
+  <div class="file-row" id="fileRow">
+    <div>
+      <div class="file-name" id="fileName"></div>
+      <div class="file-meta" id="fileMeta"></div>
+    </div>
+    <button class="clear-btn" id="clearBtn" type="button">Remove</button>
+  </div>
+
+  <div class="settings" id="settings">
+    <div class="field-label">Target size</div>
+    <div class="target-row">
+      <input type="number" id="targetKB" min="20" step="10" value="500">
+      <span class="unit">KB</span>
+      <div class="preset-row">
+        <button class="preset" data-kb="200" type="button">200 KB</button>
+        <button class="preset" data-kb="500" type="button">500 KB</button>
+        <button class="preset" data-kb="1024" type="button">1 MB</button>
+        <button class="preset" data-kb="5120" type="button">5 MB</button>
+      </div>
+    </div>
+
+    <button class="convert-btn" id="convertBtn" type="button">Compress PDF</button>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">Starting…</div>
+  </div>
+
+  <div class="results" id="results">
+    <h2>Done</h2>
+    <div id="missedTarget"></div>
+    <div class="size-compare">
+      <div class="size-box">
+        <div class="value" id="beforeSize">—</div>
+        <div class="label">before</div>
+      </div>
+      <div class="size-arrow">→</div>
+      <div class="size-box after">
+        <div class="value" id="afterSize">—</div>
+        <div class="label">after</div>
+      </div>
+      <span class="reduction-pill" id="reductionPill"></span>
+    </div>
+    <a class="download-btn" id="downloadBtn" href="#" download="compressed.pdf">Download compressed PDF</a>
+  </div>
+
+  <footer>
+    No uploads. No accounts. Works offline.
+  </footer>
+
+</div>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script>
+
+  const dropzone   = document.getElementById("dropzone");
+  const fileInput  = document.getElementById("fileInput");
+  const fileRow    = document.getElementById("fileRow");
+  const fileName   = document.getElementById("fileName");
+  const fileMeta   = document.getElementById("fileMeta");
+  const clearBtn   = document.getElementById("clearBtn");
+  const settings   = document.getElementById("settings");
+  const targetKB   = document.getElementById("targetKB");
+  const convertBtn = document.getElementById("convertBtn");
+  const progressWrap  = document.getElementById("progressWrap");
+  const progressFill  = document.getElementById("progressFill");
+  const progressLabel = document.getElementById("progressLabel");
+  const results     = document.getElementById("results");
+  const missedTarget = document.getElementById("missedTarget");
+  const beforeSize  = document.getElementById("beforeSize");
+  const afterSize   = document.getElementById("afterSize");
+  const reductionPill = document.getElementById("reductionPill");
+  const downloadBtn = document.getElementById("downloadBtn");
+
+  let currentFile = null;
+
+  function bytesToSize(bytes){
+    if(bytes < 1024) return bytes + " B";
+    if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  function selectFile(file){
+    if(!file) return;
+    if(file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")){
+      alert("Please choose a PDF file.");
+      return;
+    }
+    currentFile = file;
+    fileName.textContent = file.name;
+    fileMeta.textContent = bytesToSize(file.size);
+    fileRow.classList.add("show");
+    settings.classList.add("show");
+    results.classList.remove("show");
+    progressWrap.classList.remove("show");
+
+    // Suggest a sensible default target: roughly half the original size
+    const suggested = Math.max(50, Math.round((file.size / 1024) * 0.5));
+    targetKB.value = suggested;
+  }
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("keydown", (e) => {
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener("change", (e) => selectFile(e.target.files[0]));
+
+  ["dragover", "dragenter"].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add("drag"); })
+  );
+  ["dragleave", "drop"].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove("drag"); })
+  );
+  dropzone.addEventListener("drop", (e) => selectFile(e.dataTransfer.files && e.dataTransfer.files[0]));
+
+  clearBtn.addEventListener("click", () => {
+    currentFile = null;
+    fileInput.value = "";
+    fileRow.classList.remove("show");
+    settings.classList.remove("show");
+    results.classList.remove("show");
+  });
+
+  document.querySelectorAll(".preset").forEach(btn => {
+    btn.addEventListener("click", () => { targetKB.value = btn.dataset.kb; });
+  });
+
+  function canvasToJpegBlob(canvas, quality){
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  }
+
+  async function renderPagesAtScale(pdfDoc, scale, onProgress){
+    const canvases = [];
+    const sizes = [];
+    for(let i = 1; i <= pdfDoc.numPages; i++){
+      onProgress(`Rendering page ${i} of ${pdfDoc.numPages}…`, (i - 1) / pdfDoc.numPages);
+      const page = await pdfDoc.getPage(i);
+      const unscaled = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.floor(viewport.width));
+      canvas.height = Math.max(1, Math.floor(viewport.height));
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      canvases.push(canvas);
+      sizes.push({ width: unscaled.width, height: unscaled.height });
+    }
+    return { canvases, sizes };
+  }
+
+  async function buildPdfAtQuality(canvases, sizes, quality){
+    const { PDFDocument } = PDFLib;
+    const outDoc = await PDFDocument.create();
+    for(let i = 0; i < canvases.length; i++){
+      const blob = await canvasToJpegBlob(canvases[i], quality);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const jpg = await outDoc.embedJpg(bytes);
+      const size = sizes[i];
+      const page = outDoc.addPage([size.width, size.height]);
+      page.drawImage(jpg, { x: 0, y: 0, width: size.width, height: size.height });
+    }
+    return await outDoc.save();
+  }
+
+  async function qualitySearch(canvases, sizes, targetBytes, onProgress){
+    let low = 0.05, high = 0.92;
+    let best = null;
+    for(let i = 0; i < 6; i++){
+      const mid = (low + high) / 2;
+      onProgress(`Trying quality ${Math.round(mid * 100)}%…`, 0.5 + (i / 6) * 0.4);
+      const bytes = await buildPdfAtQuality(canvases, sizes, mid);
+      if(bytes.length > targetBytes){
+        high = mid;
+      }else{
+        best = bytes;
+        low = mid;
+      }
+    }
+    if(!best){
+      best = await buildPdfAtQuality(canvases, sizes, 0.05);
+    }
+    return best;
+  }
+
+  async function compress(){
+    if(!currentFile) return;
+
+    if(typeof pdfjsLib === "undefined" || typeof PDFLib === "undefined"){
+      alert("This page couldn't load its PDF library files (tools/lib/pdf.min.js, tools/lib/pdf-lib.min.js, tools/lib/pdf.worker.min.js). Make sure this compress-pdf.html file sits in the same folder as your tools folder, with those files inside tools/lib/.");
+      return;
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";
+
+    convertBtn.disabled = true;
+    results.classList.remove("show");
+    progressWrap.classList.add("show");
+    progressFill.style.width = "0%";
+
+    try{
+      const targetBytes = Math.max(20, parseInt(targetKB.value, 10) || 500) * 1024;
+      const arrayBuffer = await currentFile.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+      const scaleLadder = [1.6, 1.2, 0.9, 0.65];
+      let finalBytes = null;
+      let hitTarget = false;
+
+      const updateProgress = (label, fraction) => {
+        progressLabel.textContent = label;
+        progressFill.style.width = `${Math.round(Math.min(fraction, 1) * 100)}%`;
+      };
+
+      for(let rung = 0; rung < scaleLadder.length; rung++){
+        const scale = scaleLadder[rung];
+        updateProgress(`Pass ${rung + 1}: rendering at ${scale}x…`, 0);
+        const { canvases, sizes } = await renderPagesAtScale(pdfDoc, scale, updateProgress);
+
+        updateProgress("Adjusting quality to fit target size…", 0.5);
+        const bytes = await qualitySearch(canvases, sizes, targetBytes, updateProgress);
+        finalBytes = bytes;
+
+        if(bytes.length <= targetBytes){
+          hitTarget = true;
+          break;
+        }
+      }
+
+      updateProgress("Done.", 1);
+      showResults(currentFile.size, finalBytes, hitTarget);
+    }catch(err){
+      console.error(err);
+      alert("Couldn't process that PDF. It may be corrupted or password-protected.");
+    }finally{
+      progressWrap.classList.remove("show");
+      convertBtn.disabled = false;
+    }
+  }
+
+  function showResults(originalSize, compressedBytes, hitTarget){
+    beforeSize.textContent = bytesToSize(originalSize);
+    afterSize.textContent = bytesToSize(compressedBytes.length);
+    const reduction = Math.max(0, Math.round((1 - compressedBytes.length / originalSize) * 100));
+    reductionPill.textContent = `−${reduction}%`;
+
+    missedTarget.innerHTML = hitTarget
+      ? ""
+      : `<div class="missed-target">This PDF couldn't be reduced under your target without heavy quality loss — this is the smallest reliable result.</div>`;
+
+    const blob = new Blob([compressedBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const baseName = currentFile.name.replace(/\.pdf$/i, "");
+    downloadBtn.href = url;
+    downloadBtn.download = `${baseName}-compressed.pdf`;
+
+    results.classList.add("show");
+  }
+
+  convertBtn.addEventListener("click", compress);
+</script>
+
+</body>
+</html>

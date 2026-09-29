@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print Sheet — Passport &amp; Stamp Photo Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --void:#1c1a17;
+    --panel:#242019;
+    --panel-2:#2c2721;
+    --line:#3a342b;
+    --paper:#ffffff;
+    --paper-shadow: 0 30px 60px -20px rgba(0,0,0,.65), 0 2px 0 rgba(0,0,0,.4);
+    --amber:#e2a13d;
+    --amber-soft:#332a1a;
+    --amber-dim:#8a6a34;
+    --red:#c1443c;
+    --ink:#eee9df;
+    --ink-dim:#a89c88;
+    --ink-faint:#6b6255;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, #2a2419 0%, transparent 55%),
+      var(--void);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{background:var(--amber);color:#1c1a17;}
+
+  .topbar{
+    display:flex;align-items:baseline;gap:14px;
+    padding:22px 28px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .mark{
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;
+    letter-spacing:.14em;color:var(--amber);
+    border:1px solid var(--amber-dim);
+    padding:4px 9px;border-radius:2px;
+  }
+  .topbar h1{
+    font-family:'Oswald',sans-serif;font-weight:600;font-size:20px;
+    letter-spacing:.02em;margin:0;color:var(--ink);
+  }
+  .topbar .sub{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);
+    margin-left:auto;letter-spacing:.03em;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns: 400px 1fr;
+    gap:0;
+    min-height:calc(100vh - 68px);
+  }
+  @media (max-width: 940px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding:26px 26px 60px;
+    overflow-y:auto;
+  }
+  .section{margin-bottom:30px;}
+  .section-head{
+    display:flex;align-items:center;gap:9px;margin-bottom:14px;
+  }
+  .section-num{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber);
+    border:1px solid var(--amber-dim);width:20px;height:20px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .section-title{
+    font-family:'Oswald',sans-serif;font-weight:500;font-size:13.5px;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--ink);
+  }
+  .section-title small{
+    display:block;font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;
+    font-size:10.5px;color:var(--ink-faint);margin-top:2px;font-weight:400;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;font-size:11.5px;color:var(--ink-dim);
+    margin-bottom:6px;letter-spacing:.02em;
+  }
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;}
+
+  .dropzone{
+    border:1.5px dashed var(--line);
+    border-radius:var(--radius);
+    padding:26px 14px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    background:var(--panel-2);
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--amber);
+    background:#2e2820;
+  }
+  .dropzone p{margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.6;}
+  .dropzone .big{font-family:'Oswald',sans-serif;color:var(--ink);font-size:14px;letter-spacing:.02em;}
+  .dropzone input{display:none;}
+  .thumb-row{display:flex;align-items:center;gap:12px;margin-top:12px;}
+  .thumb-row img{width:52px;height:52px;object-fit:cover;border-radius:2px;border:1px solid var(--line);}
+  .thumb-row .fname{font-size:11.5px;color:var(--ink-dim);font-family:'IBM Plex Mono',monospace;word-break:break-all;}
+  .clear-btn{
+    background:none;border:1px solid var(--line);color:var(--ink-faint);
+    font-size:10.5px;padding:4px 8px;border-radius:2px;cursor:pointer;margin-left:auto;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .clear-btn:hover{color:var(--red);border-color:var(--red);}
+
+  input[type="range"]{
+    -webkit-appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+    background:var(--amber);cursor:pointer;border:2px solid #1c1a17;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:13px;height:13px;border-radius:50%;background:var(--amber);cursor:pointer;border:2px solid #1c1a17;
+  }
+  .slider-val{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber);float:right;
+  }
+
+  input[type="text"], input[type="number"]{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);
+    padding:8px 10px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+    outline:none;
+  }
+  input[type="text"]:focus, input[type="number"]:focus{border-color:var(--amber);}
+
+  .row-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  #rowsGrid{grid-template-columns:repeat(5,1fr);}
+  .col-btn{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    padding:8px 2px;border-radius:2px;cursor:pointer;text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+  }
+  .col-btn:hover{border-color:var(--amber-dim);}
+  .col-btn.active{border-color:var(--amber);background:var(--amber-soft);color:var(--amber);}
+
+  .btn-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .size-btn{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    padding:10px 6px;border-radius:2px;cursor:pointer;text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5;
+  }
+  .size-btn b{display:block;font-family:'Oswald',sans-serif;font-size:12.5px;color:var(--ink);font-weight:500;letter-spacing:.02em;}
+  .size-btn:hover{border-color:var(--amber-dim);}
+  .size-btn.active{border-color:var(--amber);background:var(--amber-soft);color:var(--amber);}
+  .size-btn.active b{color:var(--amber);}
+
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;}
+  .toggle-row label{font-size:11.5px;color:var(--ink-dim);margin:0;}
+  .toggle-row label small{display:block;color:var(--ink-faint);font-weight:400;margin-top:2px;}
+  .disabled-group{opacity:.4;pointer-events:none;}
+  .switch{position:relative;width:38px;height:20px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider-switch{
+    position:absolute;cursor:pointer;inset:0;background:var(--line);border-radius:20px;transition:.15s;
+  }
+  .slider-switch:before{
+    content:"";position:absolute;height:14px;width:14px;left:3px;top:3px;
+    background:var(--ink-dim);border-radius:50%;transition:.15s;
+  }
+  .switch input:checked + .slider-switch{background:var(--amber-dim);}
+  .switch input:checked + .slider-switch:before{transform:translateX(18px);background:var(--amber);}
+
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;}
+  .swatch{
+    width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .swatch.active{border-color:var(--amber);}
+  .pick-hint{
+    font-size:11px;color:var(--amber);margin-top:8px;
+    font-family:'IBM Plex Mono',monospace;
+    display:none;
+  }
+  .pick-hint.show{display:block;}
+  #pickCanvas{
+    width:100%;border-radius:2px;border:1px solid var(--line);cursor:crosshair;display:block;margin-top:10px;
+  }
+
+  .helptext{font-size:11px;color:var(--ink-faint);line-height:1.6;margin-top:4px;}
+
+  /* ---------- Crop tool ---------- */
+  .crop-stage{
+    position:relative;
+    background:#0f0d0a;
+    border:1px solid var(--line);
+    border-radius:2px;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    user-select:none;
+    touch-action:none;
+  }
+  .crop-stage img{display:block;max-width:100%;pointer-events:none;}
+  .crop-box{
+    position:absolute;
+    border:1.5px solid var(--amber);
+    box-shadow:0 0 0 2000px rgba(15,13,10,.68);
+    cursor:move;
+  }
+  .crop-box .grid-line{
+    position:absolute;background:rgba(226,161,61,.45);
+  }
+  .crop-box .gl-v1{left:33.333%;top:0;bottom:0;width:1px;}
+  .crop-box .gl-v2{left:66.666%;top:0;bottom:0;width:1px;}
+  .crop-box .gl-h1{top:33.333%;left:0;right:0;height:1px;}
+  .crop-box .gl-h2{top:66.666%;left:0;right:0;height:1px;}
+  .crop-handle{
+    position:absolute;width:14px;height:14px;background:var(--amber);
+    border-radius:50%;right:-7px;bottom:-7px;cursor:nwse-resize;
+    border:2px solid #1c1a17;
+  }
+  .crop-actions{display:flex;gap:8px;margin-top:12px;}
+  .crop-actions .btn{padding:10px 12px;font-size:11.5px;}
+  #recropBtn{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    padding:9px 10px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+    font-size:11px;letter-spacing:.03em;margin-bottom:12px;
+  }
+  #recropBtn:hover{border-color:var(--amber-dim);color:var(--ink);}
+  .crop-note{
+    font-size:11px;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-dim);
+    padding:8px 10px;border-radius:2px;margin-bottom:12px;display:none;
+  }
+  .crop-note.show{display:block;}
+
+  .actions{
+    position:sticky;bottom:0;background:var(--panel);
+    padding-top:16px;margin-top:6px;border-top:1px solid var(--line);
+    display:flex;gap:10px;
+  }
+  .btn{
+    flex:1;padding:13px 14px;border-radius:2px;font-family:'Oswald',sans-serif;
+    font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+    cursor:pointer;border:none;transition:filter .15s, transform .1s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--amber);color:#211a0e;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-secondary{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  .btn-secondary:hover{border-color:var(--ink-dim);}
+
+  .stage{
+    padding:36px 40px 60px;
+    display:flex;flex-direction:column;align-items:center;
+    background:
+      radial-gradient(circle at 50% 0%, #24211b 0%, transparent 60%);
+  }
+  .stage-head{width:100%;max-width:900px;display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;}
+  .stage-head .title{font-family:'Oswald',sans-serif;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);}
+  .ticket{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--amber);
+    border:1px solid var(--amber-dim);padding:5px 10px;border-radius:2px;
+    display:flex;gap:14px;
+  }
+  .ticket span b{color:var(--ink);font-weight:500;}
+
+  .sheet-wrap{
+    background:#100e0b;
+    padding:26px;
+    border-radius:3px;
+    display:inline-block;
+  }
+  .sheet-outer{display:flex;}
+  .sheet{
+    background:#ffffff;
+    box-shadow:var(--paper-shadow);
+    width:210mm;height:297mm;
+    position:relative;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .sheet-inner{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;
+  }
+  .sheet-row{display:flex;}
+  .cell{
+    position:relative;
+    outline:1px dashed #c9c2b0;
+    outline-offset:-0.5px;
+    flex-shrink:0;
+  }
+  .cell img{width:100%;height:100%;object-fit:cover;display:block;image-rendering:auto;}
+  .watermark{
+    position:absolute;bottom:3mm;left:0;right:0;text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:8px;color:#9a9282;letter-spacing:.08em;
+  }
+  .stub{
+    position:absolute;top:0;right:0;
+    background:var(--void);color:var(--amber);
+    font-family:'IBM Plex Mono',monospace;font-size:9px;
+    padding:5px 9px;border-bottom-left-radius:3px;
+    letter-spacing:.04em;
+  }
+
+  .empty-state{
+    width:210mm;max-width:100%;aspect-ratio:210/297;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+    color:var(--ink-faint);
+  }
+  .empty-state .big{font-family:'Oswald',sans-serif;font-size:15px;color:var(--ink-dim);letter-spacing:.02em;}
+  .empty-state svg{opacity:.35;}
+
+  @media print{
+    body *{visibility:hidden;}
+    .sheet, .sheet *{visibility:visible;}
+    .sheet{
+      box-shadow:none;position:fixed;top:0;left:0;margin:0;
+    }
+    @page{size:A4;margin:0;}
+  }
+
+  @media (max-width:940px){
+    .sheet-wrap{padding:12px;overflow:auto;}
+    .sheet{width:210mm;height:297mm;transform-origin:top left;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="mark">01</div>
+  <h1>Print Sheet</h1>
+  <div class="sub">A4 · PASSPORT &amp; STAMP LAYOUT</div>
+</div>
+
+<div class="layout">
+  <!-- ================= CONTROL PANEL ================= -->
+  <div class="panel">
+
+    <!-- 1. Upload -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-num">1</div>
+        <div class="section-title">Photo</div>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*">
+        <p class="big">Drop photo here</p>
+        <p>or click to browse — raw / uncropped is fine, JPG or PNG</p>
+      </div>
+      <div class="thumb-row" id="thumbRow" style="display:none;">
+        <img id="thumbImg" src="">
+        <div class="fname" id="fname"></div>
+        <button class="clear-btn" id="clearBtn">REMOVE</button>
+      </div>
+    </div>
+
+    <!-- 2. Size -->
+    <div class="section" id="sizeSection" style="display:none;">
+      <div class="section-head">
+        <div class="section-num">2</div>
+        <div class="section-title">Photo size</div>
+      </div>
+      <div class="btn-grid">
+        <div class="size-btn active" data-w="35" data-h="45">
+          <b>Passport</b>3.5×4.5cm
+        </div>
+        <div class="size-btn" data-w="20" data-h="20">
+          <b>Stamp</b>2×2cm
+        </div>
+        <div class="size-btn" data-w="51" data-h="51">
+          <b>Visa (US)</b>5.1×5.1cm
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <div class="field">
+          <label>Custom width (cm)</label>
+          <input type="number" id="customW" step="0.1" min="1" placeholder="3.5">
+        </div>
+        <div class="field">
+          <label>Custom height (cm)</label>
+          <input type="number" id="customH" step="0.1" min="1" placeholder="4.5">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Crop -->
+    <div class="section" id="cropSection" style="display:none;">
+      <div class="section-head">
+        <div class="section-num">3</div>
+        <div class="section-title">Crop <small>Frame the raw photo to the size above</small></div>
+      </div>
+      <div class="crop-note" id="cropNote">Size changed — reframe and apply crop again.</div>
+      <div class="crop-stage" id="cropStage">
+        <img id="cropImg" src="">
+        <div class="crop-box" id="cropBox">
+          <div class="grid-line gl-v1"></div><div class="grid-line gl-v2"></div>
+          <div class="grid-line gl-h1"></div><div class="grid-line gl-h2"></div>
+          <div class="crop-handle" id="cropHandle"></div>
+        </div>
+      </div>
+      <div class="crop-actions">
+        <button class="btn btn-primary" id="applyCropBtn">Apply crop</button>
+      </div>
+      <p class="helptext">Drag the frame to reposition, drag the amber dot to resize. The frame locks to the photo's aspect ratio.</p>
+    </div>
+
+    <!-- 4. Edit -->
+    <div class="section" id="editSection" style="display:none;">
+      <div class="section-head">
+        <div class="section-num">4</div>
+        <div class="section-title">Retouch</div>
+      </div>
+
+      <button id="recropBtn">↺ RECROP PHOTO</button>
+
+      <div class="field">
+        <label>Brightness <span class="slider-val" id="brightVal">0</span></label>
+        <input type="range" id="brightness" min="-60" max="60" value="0">
+      </div>
+      <div class="field">
+        <label>Contrast <span class="slider-val" id="contrastVal">0</span></label>
+        <input type="range" id="contrast" min="-60" max="60" value="0">
+      </div>
+
+      <div class="toggle-row">
+        <label>Remove background</label>
+        <label class="switch">
+          <input type="checkbox" id="bgToggle">
+          <span class="slider-switch"></span>
+        </label>
+      </div>
+
+      <div id="bgControls" style="display:none;">
+        <p class="pick-hint show">Click a spot on the backdrop below to key it out</p>
+        <canvas id="pickCanvas"></canvas>
+        <div class="field" style="margin-top:12px;">
+          <label>Tolerance <span class="slider-val" id="toleranceVal">40</span></label>
+          <input type="range" id="tolerance" min="8" max="120" value="40">
+        </div>
+        <div class="field">
+          <label>Replace with</label>
+          <div class="swatches" id="swatches">
+            <div class="swatch active" data-color="255,255,255" style="background:#fff;"></div>
+            <div class="swatch" data-color="70,120,190" style="background:#4678be;"></div>
+            <div class="swatch" data-color="200,30,40" style="background:#c81e28;"></div>
+            <div class="swatch" data-color="235,235,235" style="background:#ebebeb;border-color:#999;"></div>
+          </div>
+        </div>
+        <p class="helptext">Works best on plain studio backdrops. For busy or textured backgrounds, retake against a solid color for cleanest results.</p>
+      </div>
+    </div>
+
+    <!-- 5. Sheet -->
+    <div class="section" id="sheetSection" style="display:none;">
+      <div class="section-head">
+        <div class="section-num">5</div>
+        <div class="section-title">Sheet</div>
+      </div>
+      <div class="field">
+        <label>Photos per row</label>
+        <div class="row-grid" id="colsGrid">
+          <div class="col-btn active" data-cols="auto">Auto</div>
+          <div class="col-btn" data-cols="5">5</div>
+          <div class="col-btn" data-cols="6">6</div>
+          <div class="col-btn" data-cols="7">7</div>
+          <div class="col-btn" data-cols="8">8</div>
+          <div class="col-btn" data-cols="9">9</div>
+          <div class="col-btn" data-cols="10">10</div>
+        </div>
+        <p class="helptext" id="colsHint">Auto fits as many as the photo's true size allows. Choosing a number rescales the photo to fit exactly that many per row, keeping its aspect ratio.</p>
+      </div>
+      <div class="field">
+        <label>Rows per sheet</label>
+        <div class="row-grid" id="rowsGrid">
+          <div class="col-btn active" data-rows="auto">Auto</div>
+          <div class="col-btn" data-rows="1">1</div>
+          <div class="col-btn" data-rows="2">2</div>
+          <div class="col-btn" data-rows="4">4</div>
+          <div class="col-btn" data-rows="5">5</div>
+        </div>
+        <p class="helptext" id="rowsHint">Auto fills the page height with as many rows as fit. Choosing a number rescales the photo so exactly that many rows fit down the page.</p>
+      </div>
+      <div class="field">
+        <div class="toggle-row">
+          <label>Custom row pattern<small>Set your own photo count for every row</small></label>
+          <label class="switch">
+            <input type="checkbox" id="patternToggle">
+            <span class="slider-switch"></span>
+          </label>
+        </div>
+        <div id="patternControls" style="display:none;">
+          <input type="text" id="rowPattern" placeholder="e.g. 7, 8, 6, 8, 7">
+          <p class="helptext">One number per row, separated by commas — row 1 gets the first number, row 2 the second, and so on. Each row's photos stretch to fill the full sheet width, so rows with fewer photos will be larger and rows with more will be smaller. Overrides Photos-per-row / Rows-per-sheet above.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Copies (max <span id="maxFit">–</span>)</label>
+          <input type="number" id="qty" min="1" value="1">
+        </div>
+        <div class="field">
+          <label>Gap between (mm)</label>
+          <input type="number" id="gap" min="0" max="10" value="2" step="0.5">
+        </div>
+      </div>
+      <div class="field">
+        <label>Studio name (optional watermark)</label>
+        <input type="text" id="studioName" placeholder="e.g. Sharma Digital Studio">
+      </div>
+    </div>
+
+    <div class="actions" id="actions" style="display:none;">
+      <button class="btn btn-secondary" id="downloadBtn">Download PNG</button>
+      <button class="btn btn-primary" id="printBtn">Print sheet</button>
+    </div>
+  </div>
+
+  <!-- ================= PREVIEW STAGE ================= -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="title">A4 sheet preview</div>
+      <div class="ticket" id="ticket" style="display:none;">
+        <span>SIZE <b id="ticketSize">–</b></span>
+        <span>PER SHEET <b id="ticketCount">–</b></span>
+      </div>
+    </div>
+
+    <div class="sheet-wrap">
+      <div class="sheet-outer">
+        <div class="sheet" id="sheet">
+          <div class="empty-state" id="emptyState">
+            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <div class="big">Upload a photo to build the sheet</div>
+          </div>
+          <div class="sheet-inner" id="sheetInner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="originalCanvas" style="display:none;"></canvas>
+<canvas id="sourceCanvas" style="display:none;"></canvas>
+<canvas id="workCanvas" style="display:none;"></canvas>
+
+<script>
+(function(){
+  const state = {
+    imgLoaded:false,
+    cropApplied:false,
+    brightness:0,
+    contrast:0,
+    bgRemoval:false,
+    pickedColor:null,
+    tolerance:40,
+    replaceColor:[255,255,255],
+    sizeW:35, sizeH:45,
+    targetCols:'auto',
+    targetRows:'auto',
+    useRowPattern:false,
+    rowPattern:[],
+    gap:2,
+    qty:1,
+    maxFit:0,
+    studioName:'',
+    editedDataURL:null
+  };
+
+  const el = id => document.getElementById(id);
+  const dropzone = el('dropzone');
+  const fileInput = el('fileInput');
+  const thumbRow = el('thumbRow');
+  const thumbImg = el('thumbImg');
+  const fname = el('fname');
+  const clearBtn = el('clearBtn');
+  const sizeSection = el('sizeSection');
+  const cropSection = el('cropSection');
+  const cropNote = el('cropNote');
+  const editSection = el('editSection');
+  const sheetSection = el('sheetSection');
+  const actions = el('actions');
+  const emptyState = el('emptyState');
+  const sheetInner = el('sheetInner');
+  const ticket = el('ticket');
+  const ticketSize = el('ticketSize');
+  const ticketCount = el('ticketCount');
+  const originalCanvas = el('originalCanvas');
+  const sourceCanvas = el('sourceCanvas');
+  const workCanvas = el('workCanvas');
+  const pickCanvas = el('pickCanvas');
+  const cropStage = el('cropStage');
+  const cropImg = el('cropImg');
+  const cropBox = el('cropBox');
+  const cropHandle = el('cropHandle');
+
+  // ---------- Upload ----------
+  dropzone.addEventListener('click', ()=>fileInput.click());
+  ['dragover','dragenter'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault();dropzone.classList.add('drag');}));
+  ['dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault();dropzone.classList.remove('drag');}));
+  dropzone.addEventListener('drop', e=>{
+    const f = e.dataTransfer.files[0];
+    if(f) loadFile(f);
+  });
+  fileInput.addEventListener('change', e=>{
+    if(e.target.files[0]) loadFile(e.target.files[0]);
+  });
+  clearBtn.addEventListener('click', ()=>{
+    state.imgLoaded=false;
+    state.cropApplied=false;
+    fileInput.value='';
+    thumbRow.style.display='none';
+    sizeSection.style.display='none';
+    cropSection.style.display='none';
+    editSection.style.display='none';
+    sheetSection.style.display='none';
+    actions.style.display='none';
+    ticket.style.display='none';
+    emptyState.style.display='flex';
+    sheetInner.innerHTML='';
+  });
+
+  function loadFile(file){
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        // full raw image kept at higher res for accurate, high-quality cropping
+        const maxDim = 4000;
+        let w = img.width, h = img.height;
+        if(w>h && w>maxDim){ h = h*maxDim/w; w=maxDim; }
+        else if(h>=w && h>maxDim){ w = w*maxDim/h; h=maxDim; }
+        originalCanvas.width = w; originalCanvas.height = h;
+        const ctxO = originalCanvas.getContext('2d');
+        ctxO.imageSmoothingEnabled = true;
+        ctxO.imageSmoothingQuality = 'high';
+        ctxO.drawImage(img,0,0,w,h);
+
+        state.imgLoaded = true;
+        state.cropApplied = false;
+        thumbImg.src = e.target.result;
+        fname.textContent = file.name;
+        thumbRow.style.display='flex';
+        sizeSection.style.display='block';
+        editSection.style.display='none';
+        sheetSection.style.display='none';
+        actions.style.display='none';
+        emptyState.style.display='none';
+
+        state.pickedColor=null;
+        el('bgToggle').checked=false;
+        state.bgRemoval=false;
+        el('bgControls').style.display='none';
+
+        openCropTool(false);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Crop tool ----------
+  let cropDrag = null; // {mode:'move'|'resize', startX, startY, box:{left,top,w,h}}
+  let stageRect = null;
+
+  function openCropTool(sizeChangedWhileCropped){
+    cropSection.style.display = 'block';
+    cropImg.src = originalCanvas.toDataURL('image/jpeg',0.92);
+    cropNote.classList.toggle('show', !!sizeChangedWhileCropped);
+
+    cropImg.onload = ()=>{
+      // size stage to image's displayed box
+      const maxW = 348, maxH = 380;
+      let dw = originalCanvas.width, dh = originalCanvas.height;
+      const scale = Math.min(maxW/dw, maxH/dh, 1);
+      dw = dw*scale; dh = dh*scale;
+      cropStage.style.width = dw+'px';
+      cropStage.style.height = dh+'px';
+
+      const ratio = state.sizeW/state.sizeH;
+      let bw = dw*0.8, bh = bw/ratio;
+      if(bh > dh*0.9){ bh = dh*0.9; bw = bh*ratio; }
+      const left = (dw-bw)/2, top = (dh-bh)/2;
+      cropBox.style.width = bw+'px';
+      cropBox.style.height = bh+'px';
+      cropBox.style.left = left+'px';
+      cropBox.style.top = top+'px';
+    };
+  }
+
+  cropBox.addEventListener('pointerdown', e=>{
+    if(e.target === cropHandle) return;
+    stageRect = cropStage.getBoundingClientRect();
+    cropDrag = {
+      mode:'move', startX:e.clientX, startY:e.clientY,
+      left:parseFloat(cropBox.style.left), top:parseFloat(cropBox.style.top),
+      w:parseFloat(cropBox.style.width), h:parseFloat(cropBox.style.height)
+    };
+    e.stopPropagation();
+  });
+  cropHandle.addEventListener('pointerdown', e=>{
+    stageRect = cropStage.getBoundingClientRect();
+    cropDrag = {
+      mode:'resize', startX:e.clientX, startY:e.clientY,
+      left:parseFloat(cropBox.style.left), top:parseFloat(cropBox.style.top),
+      w:parseFloat(cropBox.style.width), h:parseFloat(cropBox.style.height)
+    };
+    e.stopPropagation();
+  });
+  window.addEventListener('pointermove', e=>{
+    if(!cropDrag || !stageRect) return;
+    const dx = e.clientX - cropDrag.startX;
+    const dy = e.clientY - cropDrag.startY;
+    const stageW = stageRect.width, stageH = stageRect.height;
+
+    if(cropDrag.mode === 'move'){
+      let nl = cropDrag.left + dx;
+      let nt = cropDrag.top + dy;
+      nl = Math.max(0, Math.min(stageW - cropDrag.w, nl));
+      nt = Math.max(0, Math.min(stageH - cropDrag.h, nt));
+      cropBox.style.left = nl+'px';
+      cropBox.style.top = nt+'px';
+    } else {
+      const ratio = state.sizeW/state.sizeH;
+      let nw = cropDrag.w + dx;
+      nw = Math.max(30, nw);
+      let nh = nw/ratio;
+      // clamp to stage bounds from current left/top
+      const maxW = stageW - cropDrag.left;
+      const maxH = stageH - cropDrag.top;
+      if(nw > maxW){ nw = maxW; nh = nw/ratio; }
+      if(nh > maxH){ nh = maxH; nw = nh*ratio; }
+      cropBox.style.width = nw+'px';
+      cropBox.style.height = nh+'px';
+    }
+  });
+  window.addEventListener('pointerup', ()=>{ cropDrag = null; });
+
+  el('applyCropBtn').addEventListener('click', ()=>{
+    const dispW = parseFloat(cropStage.style.width);
+    const scale = originalCanvas.width / dispW;
+    const sx = parseFloat(cropBox.style.left) * scale;
+    const sy = parseFloat(cropBox.style.top) * scale;
+    const sw = parseFloat(cropBox.style.width) * scale;
+    const sh = parseFloat(cropBox.style.height) * scale;
+
+    // target 400dpi (photo-lab print quality) for the chosen size, capped for performance
+    const PX_PER_MM = 400 / 25.4;
+    let destW = Math.round(state.sizeW * PX_PER_MM);
+    let destH = Math.round(state.sizeH * PX_PER_MM);
+    const MAX_DIM = 3000, MIN_DIM = 600;
+    const longEdge = Math.max(destW, destH);
+    if(longEdge > MAX_DIM){ const s = MAX_DIM/longEdge; destW = Math.round(destW*s); destH = Math.round(destH*s); }
+    const shortEdge = Math.min(destW, destH);
+    if(shortEdge < MIN_DIM){ const s = MIN_DIM/shortEdge; destW = Math.round(destW*s); destH = Math.round(destH*s); }
+
+    sourceCanvas.width = destW; sourceCanvas.height = destH;
+    const ctxC = sourceCanvas.getContext('2d');
+    ctxC.imageSmoothingEnabled = true;
+    ctxC.imageSmoothingQuality = 'high';
+    ctxC.drawImage(originalCanvas, sx, sy, sw, sh, 0, 0, destW, destH);
+
+    state.cropApplied = true;
+    cropNote.classList.remove('show');
+    editSection.style.display='block';
+    sheetSection.style.display='block';
+    actions.style.display='flex';
+
+    renderPickCanvas();
+    applyEdits();
+  });
+
+  el('recropBtn').addEventListener('click', ()=>{
+    openCropTool(false);
+    cropSection.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+
+  // ---------- Retouch controls ----------
+  el('brightness').addEventListener('input', e=>{
+    state.brightness = +e.target.value;
+    el('brightVal').textContent = state.brightness;
+    applyEdits();
+  });
+  el('contrast').addEventListener('input', e=>{
+    state.contrast = +e.target.value;
+    el('contrastVal').textContent = state.contrast;
+    applyEdits();
+  });
+  el('bgToggle').addEventListener('change', e=>{
+    state.bgRemoval = e.target.checked;
+    el('bgControls').style.display = state.bgRemoval ? 'block' : 'none';
+    applyEdits();
+  });
+  el('tolerance').addEventListener('input', e=>{
+    state.tolerance = +e.target.value;
+    el('toleranceVal').textContent = state.tolerance;
+    applyEdits();
+  });
+  document.querySelectorAll('.swatch').forEach(sw=>{
+    sw.addEventListener('click', ()=>{
+      document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+      sw.classList.add('active');
+      state.replaceColor = sw.dataset.color.split(',').map(Number);
+      applyEdits();
+    });
+  });
+
+  function renderPickCanvas(){
+    const dispW = 340;
+    const scale = dispW / sourceCanvas.width;
+    pickCanvas.width = dispW;
+    pickCanvas.height = sourceCanvas.height * scale;
+    const ctx = pickCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.filter = `brightness(${100+state.brightness}%) contrast(${100+state.contrast}%)`;
+    ctx.drawImage(sourceCanvas, 0, 0, pickCanvas.width, pickCanvas.height);
+  }
+  pickCanvas.addEventListener('click', e=>{
+    const rect = pickCanvas.getBoundingClientRect();
+    const x = Math.round((e.clientX-rect.left) * (pickCanvas.width/rect.width));
+    const y = Math.round((e.clientY-rect.top) * (pickCanvas.height/rect.height));
+    const ctx = pickCanvas.getContext('2d');
+    const d = ctx.getImageData(x,y,1,1).data;
+    state.pickedColor = [d[0],d[1],d[2]];
+    applyEdits();
+  });
+
+  function applyEdits(){
+    if(!state.imgLoaded || !state.cropApplied) return;
+    const w = sourceCanvas.width, h = sourceCanvas.height;
+    workCanvas.width = w; workCanvas.height = h;
+    const ctx = workCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.filter = `brightness(${100+state.brightness}%) contrast(${100+state.contrast}%)`;
+    ctx.drawImage(sourceCanvas,0,0);
+    ctx.filter='none';
+
+    if(state.bgRemoval && state.pickedColor){
+      const imgData = ctx.getImageData(0,0,w,h);
+      const d = imgData.data;
+      const [pr,pg,pb] = state.pickedColor;
+      const [rr,rg,rb] = state.replaceColor;
+      const t = state.tolerance;
+      for(let i=0;i<d.length;i+=4){
+        const dr=d[i]-pr, dg=d[i+1]-pg, db=d[i+2]-pb;
+        const dist = Math.sqrt(dr*dr+dg*dg+db*db);
+        if(dist < t){
+          d[i]=rr; d[i+1]=rg; d[i+2]=rb; d[i+3]=255;
+        }
+      }
+      ctx.putImageData(imgData,0,0);
+    }
+    renderPickCanvas();
+    state.editedDataURL = workCanvas.toDataURL('image/png');
+    buildSheet();
+  }
+
+  // ---------- Size ----------
+  document.querySelectorAll('.size-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.sizeW = +btn.dataset.w;
+      state.sizeH = +btn.dataset.h;
+      el('customW').value='';
+      el('customH').value='';
+      onSizeChanged();
+    });
+  });
+  function customSizeHandler(){
+    const w = parseFloat(el('customW').value);
+    const h = parseFloat(el('customH').value);
+    if(w>0 && h>0){
+      document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('active'));
+      state.sizeW = w*10;
+      state.sizeH = h*10;
+      onSizeChanged();
+    }
+  }
+  el('customW').addEventListener('input', customSizeHandler);
+  el('customH').addEventListener('input', customSizeHandler);
+
+  function onSizeChanged(){
+    if(!state.imgLoaded) return;
+    if(state.cropApplied){
+      // aspect ratio changed after a crop was baked in — ask to reframe
+      openCropTool(true);
+      editSection.style.display='none';
+      sheetSection.style.display='none';
+      actions.style.display='none';
+      state.cropApplied = false;
+    } else {
+      openCropTool(false);
+    }
+    buildSheet();
+  }
+
+  // ---------- Photos per row ----------
+  document.querySelectorAll('#colsGrid .col-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#colsGrid .col-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.cols;
+      state.targetCols = v === 'auto' ? 'auto' : +v;
+      el('colsHint').textContent = v === 'auto'
+        ? "Auto fits as many as the photo's true size allows. Choosing a number rescales the photo to fit exactly that many per row, keeping its aspect ratio."
+        : `Photo is rescaled so exactly ${v} fit across each row, keeping the ${state.sizeW}×${state.sizeH}mm aspect ratio.`;
+      buildSheet();
+    });
+  });
+
+  // ---------- Rows per sheet ----------
+  document.querySelectorAll('#rowsGrid .col-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#rowsGrid .col-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.rows;
+      state.targetRows = v === 'auto' ? 'auto' : +v;
+      el('rowsHint').textContent = v === 'auto'
+        ? "Auto fills the page height with as many rows as fit. Choosing a number rescales the photo so exactly that many rows fit down the page."
+        : `Photo is rescaled so exactly ${v} rows fit down the page.`;
+      buildSheet();
+    });
+  });
+
+  // ---------- Custom row pattern ----------
+  function parseRowPattern(str){
+    return str.split(/[,\s]+/)
+      .map(s=>s.trim())
+      .filter(Boolean)
+      .map(Number)
+      .filter(n=>Number.isFinite(n) && n>0)
+      .map(n=>Math.max(1, Math.round(n)));
+  }
+
+  const colsField = el('colsGrid').closest('.field');
+  const rowsField = el('rowsGrid').closest('.field');
+
+  el('patternToggle').addEventListener('change', e=>{
+    state.useRowPattern = e.target.checked;
+    el('patternControls').style.display = state.useRowPattern ? 'block' : 'none';
+    colsField.classList.toggle('disabled-group', state.useRowPattern);
+    rowsField.classList.toggle('disabled-group', state.useRowPattern);
+    buildSheet();
+  });
+
+  el('rowPattern').addEventListener('input', e=>{
+    state.rowPattern = parseRowPattern(e.target.value);
+    buildSheet(true);
+  });
+
+  // ---------- Sheet controls ----------
+  el('gap').addEventListener('input', e=>{
+    state.gap = +e.target.value || 0;
+    buildSheet();
+  });
+  el('qty').addEventListener('input', e=>{
+    let v = +e.target.value;
+    if(v < 1) v = 1;
+    if(v > state.maxFit) v = state.maxFit;
+    state.qty = v;
+    buildSheet(true);
+  });
+  el('studioName').addEventListener('input', e=>{
+    state.studioName = e.target.value;
+    buildSheet(true);
+  });
+
+  const SHEET_W_MM = 210, SHEET_H_MM = 297, MARGIN_MM = 5;
+
+  function buildSheet(keepQty){
+    if(!state.imgLoaded || !state.cropApplied){ return; }
+    const usableW = SHEET_W_MM - 2*MARGIN_MM;
+    const usableH = SHEET_H_MM - 2*MARGIN_MM - (state.studioName ? 8 : 0);
+    const gap = state.gap;
+    const ratio = state.sizeW / state.sizeH;
+
+    const patternActive = state.useRowPattern && state.rowPattern.length > 0;
+    let cw, ch, cols, rows, rowCounts, rowDims;
+
+    if(patternActive){
+      // one row per entry — each row's photos stretch to fill the full row width
+      rowCounts = state.rowPattern.slice();
+      rows = rowCounts.length;
+
+      rowDims = rowCounts.map(count=>{
+        const rcw = (usableW - (count-1)*gap) / count;
+        const rch = rcw / ratio;
+        return {count, cw:rcw, ch:rch};
+      });
+    } else {
+      const colsFixed = state.targetCols !== 'auto';
+      const rowsFixed = state.targetRows !== 'auto';
+
+      if(!colsFixed && !rowsFixed){
+        // fully auto — use the photo's true mm size
+        cw = state.sizeW; ch = state.sizeH;
+        cols = Math.max(1, Math.floor((usableW + gap) / (cw + gap)));
+        rows = Math.max(1, Math.floor((usableH + gap) / (ch + gap)));
+      } else {
+        cols = colsFixed ? state.targetCols : null;
+        rows = rowsFixed ? state.targetRows : null;
+
+        let cwFromCols = colsFixed ? (usableW - (cols-1)*gap) / cols : Infinity;
+        let cwFromRows = rowsFixed ? ((usableH - (rows-1)*gap) / rows) * ratio : Infinity;
+        cw = Math.min(cwFromCols, cwFromRows);
+        ch = cw / ratio;
+
+        if(!colsFixed) cols = Math.max(1, Math.floor((usableW + gap) / (cw + gap)));
+        if(!rowsFixed) rows = Math.max(1, Math.floor((usableH + gap) / (ch + gap)));
+      }
+      rowCounts = new Array(rows).fill(cols);
+      rowDims = rowCounts.map(count=>({count, cw, ch}));
+    }
+
+    state.maxFit = rowCounts.reduce((a,b)=>a+b, 0);
+    // for the size ticket / non-pattern code paths that read state.cellW/cellH
+    state.cellW = rowDims[0] ? rowDims[0].cw : 0;
+    state.cellH = rowDims[0] ? rowDims[0].ch : 0;
+    el('maxFit').textContent = state.maxFit;
+
+    if(!keepQty){
+      state.qty = state.maxFit;
+      el('qty').value = state.maxFit;
+    } else if(state.qty > state.maxFit){
+      state.qty = state.maxFit;
+      el('qty').value = state.maxFit;
+    }
+
+    sheetInner.innerHTML='';
+    sheetInner.style.padding = MARGIN_MM+'mm';
+    sheetInner.style.gap = gap+'mm';
+
+    let placed = 0;
+    rowDims.forEach(({count, cw:rcw, ch:rch})=>{
+      const rowEl = document.createElement('div');
+      rowEl.className = 'sheet-row';
+      rowEl.style.gap = gap+'mm';
+      for(let c=0;c<count;c++){
+        const cell = document.createElement('div');
+        cell.className='cell';
+        cell.style.width = rcw+'mm';
+        cell.style.height = rch+'mm';
+        if(placed < state.qty){
+          const img = document.createElement('img');
+          img.src = state.editedDataURL;
+          cell.appendChild(img);
+        }
+        placed++;
+        rowEl.appendChild(cell);
+      }
+      sheetInner.appendChild(rowEl);
+    });
+
+    document.querySelectorAll('.watermark').forEach(n=>n.remove());
+
+    if(state.studioName){
+      const wm = document.createElement('div');
+      wm.className='watermark';
+      wm.textContent = state.studioName;
+      el('sheet').appendChild(wm);
+    }
+
+    ticket.style.display='flex';
+    if(patternActive){
+      const sizes = rowDims.map(r=>Math.round(r.cw*10)/10);
+      const minS = Math.min(...sizes), maxS = Math.max(...sizes);
+      ticketSize.textContent = minS===maxS ? `${minS}mm wide` : `${minS}–${maxS}mm wide (varies by row)`;
+
+      const totalH = rowDims.reduce((sum,r)=>sum+r.ch, 0) + (rows-1)*gap;
+      let warn = document.getElementById('patternOverflowWarning');
+      if(totalH > usableH){
+        if(!warn){
+          warn = document.createElement('p');
+          warn.id = 'patternOverflowWarning';
+          warn.className = 'helptext';
+          warn.style.color = '#c0392b';
+          el('rowPattern').insertAdjacentElement('afterend', warn);
+        }
+        warn.textContent = `⚠ This pattern needs about ${Math.round(totalH)}mm of height, taller than the ${Math.round(usableH)}mm available — the bottom rows will be cut off. Reduce the number of rows or the gap.`;
+      } else if(warn){
+        warn.remove();
+      }
+    } else {
+      document.getElementById('patternOverflowWarning')?.remove();
+      const cwR = Math.round(rowDims[0].cw*10)/10, chR = Math.round(rowDims[0].ch*10)/10;
+      ticketSize.textContent = `${cwR}×${chR}mm`;
+    }
+    ticketCount.textContent = `${state.qty} of ${state.maxFit}`;
+  }
+
+
+  // ---------- Actions ----------
+  el('printBtn').addEventListener('click', ()=>window.print());
+  el('downloadBtn').addEventListener('click', ()=>{
+    const sheet = el('sheet');
+    html2canvas(sheet, {
+      scale:4.2,
+      backgroundColor:'#ffffff',
+      onclone: (doc)=>{
+        const s = doc.getElementById('sheet');
+        if(s) s.style.background = '#ffffff';
+      }
+    }).then(canvas=>{
+      const link = document.createElement('a');
+      link.download = 'print-sheet.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

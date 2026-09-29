@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit PDF — Toolbox</title>
+<style>
+  :root{
+    --page: #FBF9F4;
+    --ink: #201A12;
+    --ink-soft: #6B6153;
+    --line: #E4DDCB;
+
+    --steel-a: #1F3F5C;
+    --steel-b: #2E5E82;
+    --ice: #E7F1F7;
+
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+  }
+
+  .wrap{
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+  }
+
+  header{
+    padding: 30px 0 26px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .back{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .back:hover{ text-decoration: underline; }
+
+  .badge{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  h1{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(28px, 4.4vw, 40px);
+    line-height: 1.1;
+    margin: 4px 0 12px;
+  }
+
+  .lede{
+    color: var(--ink-soft);
+    font-size: 15.5px;
+    max-width: 60ch;
+    margin: 0 0 34px;
+  }
+
+  /* drop zone */
+  .dropzone{
+    border: 1.5px dashed var(--line);
+    border-radius: 18px;
+    padding: 46px 24px;
+    text-align: center;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+  .dropzone.drag{ border-color: var(--steel-b); background: var(--ice); }
+  .dropzone .icon{ width: 44px; height: 44px; margin: 0 auto 16px; }
+  .dropzone .icon svg{ width: 100%; height: 100%; }
+  .dropzone p{ margin: 0; font-size: 15px; }
+  .dropzone .sub{ color: var(--ink-soft); font-size: 13.5px; margin-top: 6px; }
+  .dropzone strong{ color: var(--steel-a); }
+  input[type="file"]{ display: none; }
+
+  .file-row{
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    font-size: 14px;
+  }
+  .file-row.show{ display: flex; }
+  .file-name{ font-weight: 600; overflow-wrap: anywhere; }
+  .file-meta{ color: var(--ink-soft); font-size: 13px; }
+  .clear-btn{
+    border: none; background: none; color: var(--ink-soft);
+    font-size: 13px; cursor: pointer; text-decoration: underline; padding: 0;
+  }
+
+  .editor{ display: none; margin-top: 30px; }
+  .editor.show{ display: block; }
+
+  .section-title{
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 20px;
+    margin: 0 0 14px;
+  }
+
+  /* page grid */
+  .page-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .page-cell{
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .page-thumb-wrap{
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .page-thumb-wrap img{
+    max-width: 100%;
+    max-height: 100%;
+    border: 1px solid var(--line);
+    transition: transform 160ms ease;
+  }
+
+  .page-label{ font-size: 12.5px; color: var(--ink-soft); margin-bottom: 8px; }
+
+  .page-controls{
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .page-controls button{
+    border: 1px solid var(--line);
+    background: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-controls button:hover{ border-color: var(--steel-a); color: var(--steel-a); }
+  .page-controls button.danger:hover{ border-color: #A64B5C; color: #A64B5C; }
+
+  /* add element panel */
+  .panel{
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #fff;
+    padding: 22px;
+    margin-bottom: 30px;
+  }
+
+  .type-toggle{
+    display: inline-flex;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+    margin-bottom: 20px;
+  }
+  .type-toggle button{
+    border: none;
+    background: none;
+    padding: 7px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .type-toggle button.active{ background: var(--steel-a); color: #fff; }
+
+  .form-grid{
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 700px){
+    .form-grid{ grid-template-columns: 1fr; }
+  }
+
+  .field{ margin-bottom: 16px; }
+  .field label{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .field textarea, .field input[type="number"], .field select{
+    width: 100%;
+    padding: 9px 11px;
+    border: 1.5px solid var(--line);
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: var(--font-body);
+  }
+  .field textarea{ resize: vertical; min-height: 64px; }
+  .field textarea:focus, .field input:focus, .field select:focus{
+    outline: none; border-color: var(--steel-a);
+  }
+  .two-col{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field input[type="color"]{
+    width: 100%; height: 38px; padding: 3px;
+    border: 1.5px solid var(--line); border-radius: 9px; cursor: pointer;
+  }
+
+  .preview-box{
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--page);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+  }
+  .preview-box img{ max-width: 100%; max-height: 320px; display: block; }
+  .preview-marker{
+    position: absolute;
+    transform: translate(-2px, -2px);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--steel-a);
+    background: rgba(231,241,247,0.9);
+    border: 1px solid var(--steel-a);
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .add-btn{
+    border: none;
+    background: var(--steel-a);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 11px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .add-btn:hover{ background: #17324A; }
+
+  /* annotation list */
+  .anno-list{ display: flex; flex-direction: column; gap: 10px; margin-bottom: 34px; }
+  .anno-item{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 13.5px;
+  }
+  .anno-item .desc{ overflow-wrap: anywhere; }
+  .anno-item button{
+    border: none; background: none; color: var(--ink-soft);
+    font-size: 13px; cursor: pointer; text-decoration: underline; flex-shrink: 0;
+  }
+  .anno-empty{ color: var(--ink-soft); font-size: 13.5px; }
+
+  .save-row{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .save-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: none;
+    background: var(--steel-a);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 13px 26px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .save-btn:disabled{ opacity: 0.5; cursor: default; }
+  .save-btn:not(:disabled):hover{ background: #17324A; }
+
+  .download-link{
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--steel-a);
+    font-weight: 600;
+    font-size: 14.5px;
+    text-decoration: none;
+  }
+  .download-link.show{ display: inline-flex; }
+  .download-link:hover{ text-decoration: underline; }
+
+  footer{
+    margin-top: 50px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  a:focus-visible, button:focus-visible, .dropzone:focus-visible{
+    outline: 2px solid var(--steel-a);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <a class="back" href="../index.html">Toolbox</a>
+    <span class="badge">Runs on your device</span>
+  </header>
+
+  <h1>Edit PDF</h1>
+  <p class="lede">Reorder, rotate, or delete pages, and add text or an image anywhere on the page. The original content stays sharp — nothing is uploaded.</p>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a PDF file">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 44 44" fill="none" stroke="#1F3F5C" stroke-width="1.6">
+        <path d="M11 4 H27 L33 10 V40 H11 Z"></path>
+        <path d="M27 4 V10 H33"></path>
+        <path d="M17 26 L20 29 L27 21"></path>
+      </svg>
+    </div>
+    <p><strong>Click to choose a PDF</strong> or drag one here</p>
+    <p class="sub">Stays on this device the whole time</p>
+    <input type="file" id="fileInput" accept="application/pdf">
+  </div>
+
+  <div class="file-row" id="fileRow">
+    <div>
+      <div class="file-name" id="fileName"></div>
+      <div class="file-meta" id="fileMeta"></div>
+    </div>
+    <button class="clear-btn" id="clearBtn" type="button">Start over</button>
+  </div>
+
+  <div class="editor" id="editor">
+
+    <div class="section-title">Pages</div>
+    <div class="page-grid" id="pageGrid"></div>
+
+    <div class="section-title">Add text or image</div>
+    <div class="panel">
+      <div class="type-toggle" id="typeToggle">
+        <button type="button" class="active" data-type="text">Text</button>
+        <button type="button" data-type="image">Image</button>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <div class="field" id="textFields">
+            <label for="annoText">Text</label>
+            <textarea id="annoText" placeholder="Type what you want to add…"></textarea>
+          </div>
+          <div class="field" id="imageFields" style="display:none;">
+            <label for="annoImage">Image file</label>
+            <input type="file" id="annoImage" accept="image/*">
+          </div>
+
+          <div class="field">
+            <label for="pageSelect">Page</label>
+            <select id="pageSelect"></select>
+          </div>
+
+          <div class="two-col">
+            <div class="field" id="fontSizeField">
+              <label for="fontSize">Font size</label>
+              <input type="number" id="fontSize" min="6" max="120" value="24">
+            </div>
+            <div class="field" id="colorField">
+              <label for="annoColor">Color</label>
+              <input type="color" id="annoColor" value="#1f3f5c">
+            </div>
+            <div class="field" id="widthField" style="display:none;">
+              <label for="imgWidth">Width (% of page)</label>
+              <input type="number" id="imgWidth" min="2" max="100" value="30">
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="field">
+              <label for="posX">Position from left (%)</label>
+              <input type="number" id="posX" min="0" max="100" value="10">
+            </div>
+            <div class="field">
+              <label for="posY">Position from top (%)</label>
+              <input type="number" id="posY" min="0" max="100" value="10">
+            </div>
+          </div>
+
+          <button class="add-btn" id="addAnnoBtn" type="button">Add to page</button>
+        </div>
+
+        <div class="preview-box" id="previewBox">
+          <img id="previewImg" alt="Selected page preview">
+          <div class="preview-marker" id="previewMarker" style="display:none;">here</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Added elements</div>
+    <div class="anno-list" id="annoList">
+      <div class="anno-empty">Nothing added yet.</div>
+    </div>
+
+    <div class="save-row">
+      <button class="save-btn" id="saveBtn" type="button">Save edited PDF</button>
+      <a class="download-link" id="downloadLink" href="#" download="edited.pdf">Download ready — click here</a>
+    </div>
+
+  </div>
+
+  <footer>
+    No uploads. No accounts. Works offline.
+  </footer>
+
+</div>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script>
+
+  const dropzone   = document.getElementById("dropzone");
+  const fileInput  = document.getElementById("fileInput");
+  const fileRow    = document.getElementById("fileRow");
+  const fileNameEl = document.getElementById("fileName");
+  const fileMetaEl = document.getElementById("fileMeta");
+  const clearBtn   = document.getElementById("clearBtn");
+  const editor     = document.getElementById("editor");
+  const pageGrid   = document.getElementById("pageGrid");
+
+  const typeToggle = document.getElementById("typeToggle");
+  const textFields  = document.getElementById("textFields");
+  const imageFields = document.getElementById("imageFields");
+  const fontSizeField = document.getElementById("fontSizeField");
+  const colorField  = document.getElementById("colorField");
+  const widthField  = document.getElementById("widthField");
+  const annoText   = document.getElementById("annoText");
+  const annoImage  = document.getElementById("annoImage");
+  const pageSelect = document.getElementById("pageSelect");
+  const fontSize   = document.getElementById("fontSize");
+  const annoColor  = document.getElementById("annoColor");
+  const imgWidth   = document.getElementById("imgWidth");
+  const posX       = document.getElementById("posX");
+  const posY       = document.getElementById("posY");
+  const addAnnoBtn = document.getElementById("addAnnoBtn");
+  const previewImg = document.getElementById("previewImg");
+  const previewMarker = document.getElementById("previewMarker");
+  const annoList   = document.getElementById("annoList");
+  const saveBtn    = document.getElementById("saveBtn");
+  const downloadLink = document.getElementById("downloadLink");
+
+  let currentFile = null;
+  let originalBytes = null;
+  let thumbs = [];      // { originalIndex, dataUrl, widthPt, heightPt }
+  let pages = [];        // current order: { id, originalIndex, rotation }
+  let annotations = [];  // { id, type, pageId, text, fontSize, color, xPct, yPct, imgDataUrl, widthPct }
+  let idCounter = 0;
+  let currentType = "text";
+
+  function bytesToSize(bytes){
+    if(bytes < 1024) return bytes + " B";
+    if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  // ---------- file selection ----------
+
+  function selectFile(file){
+    if(!file) return;
+    if(file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")){
+      alert("Please choose a PDF file.");
+      return;
+    }
+    currentFile = file;
+    fileNameEl.textContent = file.name;
+    fileMetaEl.textContent = bytesToSize(file.size);
+    fileRow.classList.add("show");
+    loadPdf(file);
+  }
+
+  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("keydown", (e) => {
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener("change", (e) => selectFile(e.target.files[0]));
+
+  ["dragover", "dragenter"].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add("drag"); })
+  );
+  ["dragleave", "drop"].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove("drag"); })
+  );
+  dropzone.addEventListener("drop", (e) => selectFile(e.dataTransfer.files && e.dataTransfer.files[0]));
+
+  clearBtn.addEventListener("click", () => {
+    currentFile = null; originalBytes = null; thumbs = []; pages = []; annotations = [];
+    fileInput.value = "";
+    fileRow.classList.remove("show");
+    editor.classList.remove("show");
+    downloadLink.classList.remove("show");
+  });
+
+  // ---------- loading + thumbnails ----------
+
+  async function loadPdf(file){
+    if(typeof pdfjsLib === "undefined" || typeof PDFLib === "undefined"){
+      alert("This page couldn't load its PDF library files (lib/pdf.min.js, lib/pdf-lib.min.js, lib/pdf.worker.min.js). Make sure this file sits inside your tools folder, next to a lib folder containing those files.");
+      return;
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";
+
+    originalBytes = new Uint8Array(await file.arrayBuffer());
+    const pdf = await pdfjsLib.getDocument({ data: originalBytes.slice() }).promise;
+
+    thumbs = [];
+    pages = [];
+    annotations = [];
+
+    for(let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const unscaled = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: Math.min(1.4, 400 / unscaled.width) });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      thumbs.push({
+        originalIndex: i - 1,
+        dataUrl: canvas.toDataURL("image/png"),
+        widthPt: unscaled.width,
+        heightPt: unscaled.height
+      });
+
+      pages.push({ id: `p${i - 1}`, originalIndex: i - 1, rotation: 0 });
+    }
+
+    editor.classList.add("show");
+    downloadLink.classList.remove("show");
+    renderPageGrid();
+    renderPageSelect();
+    renderAnnoList();
+    updatePreview();
+  }
+
+  // ---------- page grid ----------
+
+  function thumbFor(pageObj){
+    return thumbs.find(t => t.originalIndex === pageObj.originalIndex);
+  }
+
+  function renderPageGrid(){
+    pageGrid.innerHTML = "";
+    pages.forEach((p, idx) => {
+      const t = thumbFor(p);
+      const cell = document.createElement("div");
+      cell.className = "page-cell";
+      cell.innerHTML = `
+        <div class="page-thumb-wrap">
+          <img src="${t.dataUrl}" style="transform: rotate(${p.rotation}deg);" alt="Page ${idx + 1}">
+        </div>
+        <div class="page-label">Page ${idx + 1}</div>
+        <div class="page-controls">
+          <button type="button" data-act="left" data-id="${p.id}" title="Move earlier">←</button>
+          <button type="button" data-act="rotL" data-id="${p.id}" title="Rotate left">⟲</button>
+          <button type="button" data-act="rotR" data-id="${p.id}" title="Rotate right">⟳</button>
+          <button type="button" class="danger" data-act="del" data-id="${p.id}" title="Delete page">✕</button>
+          <button type="button" data-act="right" data-id="${p.id}" title="Move later">→</button>
+        </div>
+      `;
+      pageGrid.appendChild(cell);
+    });
+
+    pageGrid.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => handlePageAction(btn.dataset.act, btn.dataset.id));
+    });
+  }
+
+  function handlePageAction(act, id){
+    const idx = pages.findIndex(p => p.id === id);
+    if(idx === -1) return;
+
+    if(act === "rotL") pages[idx].rotation = (pages[idx].rotation + 270) % 360;
+    if(act === "rotR") pages[idx].rotation = (pages[idx].rotation + 90) % 360;
+    if(act === "left" && idx > 0){
+      [pages[idx - 1], pages[idx]] = [pages[idx], pages[idx - 1]];
+    }
+    if(act === "right" && idx < pages.length - 1){
+      [pages[idx + 1], pages[idx]] = [pages[idx], pages[idx + 1]];
+    }
+    if(act === "del"){
+      if(pages.length <= 1){ alert("A PDF needs at least one page."); return; }
+      pages.splice(idx, 1);
+      annotations = annotations.filter(a => a.pageId !== id);
+    }
+
+    renderPageGrid();
+    renderPageSelect();
+    renderAnnoList();
+    updatePreview();
+  }
+
+  // ---------- add element panel ----------
+
+  typeToggle.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if(!btn) return;
+    currentType = btn.dataset.type;
+    typeToggle.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+    const isText = currentType === "text";
+    textFields.style.display = isText ? "block" : "none";
+    imageFields.style.display = isText ? "none" : "block";
+    fontSizeField.style.display = isText ? "block" : "none";
+    colorField.style.display = isText ? "block" : "none";
+    widthField.style.display = isText ? "none" : "block";
+  });
+
+  function renderPageSelect(){
+    const prevValue = pageSelect.value;
+    pageSelect.innerHTML = "";
+    pages.forEach((p, idx) => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `Page ${idx + 1}`;
+      pageSelect.appendChild(opt);
+    });
+    if(pages.some(p => p.id === prevValue)) pageSelect.value = prevValue;
+    updatePreview();
+  }
+
+  function updatePreview(){
+    const p = pages.find(p => p.id === pageSelect.value) || pages[0];
+    if(!p){ previewImg.removeAttribute("src"); previewMarker.style.display = "none"; return; }
+    const t = thumbFor(p);
+    previewImg.src = t.dataUrl;
+    previewImg.style.transform = `rotate(${p.rotation}deg)`;
+    placeMarker();
+  }
+
+  function placeMarker(){
+    if(!previewImg.src){ previewMarker.style.display = "none"; return; }
+    const boxRect = previewImg.getBoundingClientRect();
+    const parentRect = document.getElementById("previewBox").getBoundingClientRect();
+    if(boxRect.width === 0){ previewMarker.style.display = "none"; return; }
+    const x = parseFloat(posX.value) || 0;
+    const y = parseFloat(posY.value) || 0;
+    previewMarker.style.display = "block";
+    previewMarker.style.left = `${(boxRect.left - parentRect.left) + (x / 100) * boxRect.width}px`;
+    previewMarker.style.top = `${(boxRect.top - parentRect.top) + (y / 100) * boxRect.height}px`;
+    previewMarker.textContent = currentType === "text" ? "text" : "image";
+  }
+
+  [posX, posY, pageSelect].forEach(el => el.addEventListener("input", () => {
+    if(el === pageSelect) updatePreview(); else placeMarker();
+  }));
+  window.addEventListener("resize", placeMarker);
+  previewImg.addEventListener("load", placeMarker);
+
+  function readImageAsDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  addAnnoBtn.addEventListener("click", async () => {
+    if(pages.length === 0) return;
+    const pageId = pageSelect.value;
+
+    if(currentType === "text"){
+      const text = annoText.value.trim();
+      if(!text){ alert("Type some text first."); return; }
+      annotations.push({
+        id: ++idCounter, type: "text", pageId,
+        text, fontSize: parseInt(fontSize.value, 10) || 24,
+        color: annoColor.value,
+        xPct: parseFloat(posX.value) || 0, yPct: parseFloat(posY.value) || 0
+      });
+      annoText.value = "";
+    }else{
+      const file = annoImage.files[0];
+      if(!file){ alert("Choose an image first."); return; }
+      const dataUrl = await readImageAsDataUrl(file);
+      annotations.push({
+        id: ++idCounter, type: "image", pageId,
+        imgDataUrl: dataUrl, widthPct: parseFloat(imgWidth.value) || 30,
+        xPct: parseFloat(posX.value) || 0, yPct: parseFloat(posY.value) || 0
+      });
+      annoImage.value = "";
+    }
+    renderAnnoList();
+  });
+
+  function renderAnnoList(){
+    annotations = annotations.filter(a => pages.some(p => p.id === a.pageId));
+    annoList.innerHTML = "";
+    if(annotations.length === 0){
+      annoList.innerHTML = `<div class="anno-empty">Nothing added yet.</div>`;
+      return;
+    }
+    annotations.forEach(a => {
+      const pageIdx = pages.findIndex(p => p.id === a.pageId);
+      const row = document.createElement("div");
+      row.className = "anno-item";
+      const desc = a.type === "text"
+        ? `Text on page ${pageIdx + 1}: “${a.text.length > 40 ? a.text.slice(0, 40) + "…" : a.text}”`
+        : `Image on page ${pageIdx + 1}`;
+      row.innerHTML = `<span class="desc">${desc}</span><button type="button" data-remove="${a.id}">Remove</button>`;
+      annoList.appendChild(row);
+    });
+    annoList.querySelectorAll("[data-remove]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        annotations = annotations.filter(a => a.id !== parseInt(btn.dataset.remove, 10));
+        renderAnnoList();
+      });
+    });
+  }
+
+  // ---------- save / export ----------
+
+  function hexToRgb01(hex){
+    const m = hex.replace("#", "");
+    return {
+      r: parseInt(m.substring(0, 2), 16) / 255,
+      g: parseInt(m.substring(2, 4), 16) / 255,
+      b: parseInt(m.substring(4, 6), 16) / 255
+    };
+  }
+
+  saveBtn.addEventListener("click", async () => {
+    if(!originalBytes || pages.length === 0) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving…";
+    downloadLink.classList.remove("show");
+
+    try{
+      const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+      const srcDoc = await PDFDocument.load(originalBytes);
+      const outDoc = await PDFDocument.create();
+      const font = await outDoc.embedFont(StandardFonts.Helvetica);
+
+      const orderedIndexes = pages.map(p => p.originalIndex);
+      const copiedPages = await outDoc.copyPages(srcDoc, orderedIndexes);
+      copiedPages.forEach(p => outDoc.addPage(p));
+
+      for(let i = 0; i < pages.length; i++){
+        const pageState = pages[i];
+        const outPage = outDoc.getPage(i);
+        const { width, height } = outPage.getSize();
+
+        const pageAnnos = annotations.filter(a => a.pageId === pageState.id);
+        for(const a of pageAnnos){
+          const x = (a.xPct / 100) * width;
+          const yTop = (a.yPct / 100) * height;
+
+          if(a.type === "text"){
+            const c = hexToRgb01(a.color);
+            const lines = a.text.split("\n");
+            let cursorY = height - yTop - a.fontSize;
+            for(const line of lines){
+              outPage.drawText(line, {
+                x, y: cursorY, size: a.fontSize, font,
+                color: rgb(c.r, c.g, c.b)
+              });
+              cursorY -= a.fontSize * 1.25;
+            }
+          }else{
+            const imgBytes = a.imgDataUrl.split(",")[1];
+            const raw = Uint8Array.from(atob(imgBytes), c => c.charCodeAt(0));
+            const isPng = a.imgDataUrl.startsWith("data:image/png");
+            const embedded = isPng ? await outDoc.embedPng(raw) : await outDoc.embedJpg(raw);
+            const imgWidthPt = (a.widthPct / 100) * width;
+            const imgHeightPt = imgWidthPt * (embedded.height / embedded.width);
+            outPage.drawImage(embedded, {
+              x, y: height - yTop - imgHeightPt,
+              width: imgWidthPt, height: imgHeightPt
+            });
+          }
+        }
+
+        if(pageState.rotation){
+          outPage.setRotation(degrees(pageState.rotation));
+        }
+      }
+
+      const outBytes = await outDoc.save();
+      const blob = new Blob([outBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const baseName = currentFile.name.replace(/\.pdf$/i, "");
+      downloadLink.href = url;
+      downloadLink.download = `${baseName}-edited.pdf`;
+      downloadLink.classList.add("show");
+    }catch(err){
+      console.error(err);
+      alert("Couldn't save this PDF. It may be corrupted or password-protected.");
+    }finally{
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save edited PDF";
+    }
+  });
+
+</script>
+
+</body>
+</html>
