@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unlock PDF &amp; add visual signature — Toolbox</title>
+<style>
+  :root{
+    --page:#FBF9F4;--ink:#201A12;--ink-soft:#6B6153;--line:#E4DDCB;
+    --rose:#7A2E3D;--blush:#F7E9EB;--font-display:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    --font-body:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font-body);line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px 60px}
+  header{padding:30px 0 26px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .back{font:italic 18px var(--font-display);color:var(--ink);text-decoration:none}
+  .back:hover{text-decoration:underline}
+  .badge{font-size:12.5px;color:var(--ink-soft);border:1px solid var(--line);padding:5px 12px;border-radius:999px}
+  h1{font:400 clamp(28px,4.4vw,40px)/1.1 var(--font-display);margin:4px 0 12px}
+  .lede{color:var(--ink-soft);font-size:15.5px;max-width:68ch;margin:0 0 22px}
+  .notice{display:flex;gap:10px;align-items:flex-start;background:var(--blush);border:1px solid #EAD1D6;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#682B39;margin-bottom:22px}
+  .notice svg{flex-shrink:0;margin-top:2px}
+  .dropzone{border:1.5px dashed var(--line);border-radius:18px;padding:30px 24px;text-align:center;cursor:pointer;background:#fff;transition:border-color 160ms ease,background 160ms ease}
+  .dropzone.drag{border-color:var(--rose);background:var(--blush)}
+  .dropzone .icon{width:44px;height:44px;margin:0 auto 12px}
+  .dropzone .icon svg{width:100%;height:100%}
+  .dropzone p{margin:0;font-size:15px}
+  .dropzone .sub{color:var(--ink-soft);font-size:13px;margin-top:6px}
+  .dropzone strong{color:var(--rose)}
+  input[type=file]{display:none}
+  .upload-settings{display:none;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .upload-settings.show{display:block}
+  .selected-file{font-size:13px;color:var(--ink-soft);overflow-wrap:anywhere;margin:0 0 12px}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .field input[type=password],.field input[type=text],.field select{width:100%;padding:10px 11px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:14px var(--font-body)}
+  .hint{color:var(--ink-soft);font-size:12px;margin:5px 0 0}
+  .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+  .primary-btn,.secondary-btn,.download-btn{border-radius:999px;padding:11px 18px;font:600 14px var(--font-body);cursor:pointer}
+  .primary-btn{border:0;background:var(--rose);color:#fff;white-space:nowrap}
+  .primary-btn:hover:not(:disabled){background:#612331}
+  .primary-btn:disabled{opacity:.5;cursor:default}
+  .secondary-btn{border:1px solid var(--line);background:#fff;color:var(--ink-soft)}
+  .secondary-btn:hover{border-color:var(--ink);color:var(--ink)}
+  .error{display:none;margin-top:14px;padding:11px 14px;border-radius:10px;background:var(--blush);color:#7A2E3D;font-size:13.5px}
+  .error.show{display:block}
+  .editor{display:none;margin-top:22px}
+  .editor.show{display:block}
+  .settings{padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:20px 0 10px}
+  .section-heading h2{font:400 21px var(--font-display);margin:0}
+  .section-heading span{color:var(--ink-soft);font-size:12.5px}
+  .signature-tools{margin-top:12px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .signature-fields{display:grid;grid-template-columns:minmax(140px,.65fr) minmax(180px,1fr) auto;gap:12px;align-items:end}
+  .draw-tools{display:none;margin-top:12px}
+  .draw-tools.show{display:block}
+  #signaturePad{display:block;width:100%;height:110px;border:1px dashed var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}
+  .signature-note{font-size:12px;color:var(--ink-soft);margin:8px 0 0}
+  input[type=range]{width:100%;accent-color:var(--rose)}
+  .preview-wrap{padding:14px;background:#e9e4d8;border-radius:12px;overflow:auto;text-align:center}
+  #pagePreview{display:block;width:auto;height:auto;max-width:100%;max-height:72vh;margin:0 auto;background:#fff;box-shadow:0 4px 16px #201a1222;touch-action:none;cursor:crosshair}
+  #pagePreview.dragging{cursor:grabbing}
+  .preview-hint{font-size:12px;color:var(--ink-soft);margin:9px 0 0}
+  .actions{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .progress{display:none;margin-top:14px;color:var(--ink-soft);font-size:13px}
+  .progress.show{display:block}
+  .result{display:none;margin-top:22px;padding:18px;border:1px solid #EAD1D6;border-radius:14px;background:#FCF1F2}
+  .result.show{display:block}
+  .result h2{font:400 21px var(--font-display);margin:0 0 5px}
+  .result p{color:#682B39;font-size:13px;margin:0}
+  .download-btn{display:inline-flex;margin-top:13px;background:var(--rose);color:#fff;text-decoration:none}
+  .download-btn:hover{background:#612331}
+  footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)}
+  a:focus-visible,button:focus-visible,.dropzone:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+  @media(max-width:600px){.signature-fields{grid-template-columns:1fr 1fr}.signature-fields .field:nth-child(2){grid-column:1/-1}.row{grid-template-columns:1fr}.primary-btn{width:fit-content}}
+  @media(max-width:480px){.wrap{padding:0 18px 48px}.preview-wrap{padding:8px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="../index.html">Toolbox</a>
+    <span class="badge">Runs on your device</span>
+  </header>
+  <h1>Unlock PDF &amp; add a visual signature</h1>
+  <p class="lede">Open a password-protected PDF with its password, optionally place a typed or drawn signature mark on a page, and save a copy. Your document stays in your browser.</p>
+  <div class="notice">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#682B39" stroke-width="1.4"><circle cx="8" cy="8" r="6.5"></circle><line x1="8" y1="7" x2="8" y2="11.5"></line><circle cx="8" cy="4.7" r="0.6" fill="#682B39" stroke="none"></circle></svg>
+    <span>This browser-only tool does not create certificate-backed signatures or change Adobe's verification status. Saving creates a flattened copy, which removes any existing digital signatures, including a UIDAI signature. To verify an original Aadhaar signature, keep the original PDF unchanged and verify its signer certificate in Adobe. Enter the PDF password only if you have it; passwords are never guessed or bypassed.</span>
+  </div>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a PDF">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 44 44" fill="none" stroke="#7A2E3D" stroke-width="1.6"><path d="M11 4h15l8 8v27H11z"></path><path d="M26 4v9h8"></path><path d="M16 23h13M16 29h13"></path><path d="M22 35v-8m-4 4 4-4 4 4"></path></svg>
+    </div>
+    <p><strong>Click to choose a PDF</strong> or drag it here</p>
+    <p class="sub">Password-protected and regular PDFs are supported</p>
+    <input type="file" id="fileInput" accept="application/pdf,.pdf">
+  </div>
+  <section class="upload-settings" id="uploadSettings" aria-label="Open selected PDF">
+    <p class="selected-file" id="selectedFile"></p>
+    <div class="row">
+      <div class="field">
+        <label for="password">PDF password <span>(if required)</span></label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="Enter the document password">
+        <p class="hint">Password is used locally to open the selected file.</p>
+      </div>
+      <button class="primary-btn" id="openBtn" type="button">Open PDF</button>
+    </div>
+  </section>
+  <div class="error" id="error" role="alert"></div>
+
+  <main class="editor" id="editor">
+    <section class="settings" aria-label="PDF output options">
+      <div class="settings-grid">
+        <div class="field">
+          <label for="pageSelect">Page for visual mark</label>
+          <select id="pageSelect"></select>
+        </div>
+        <div class="field">
+          <label for="resolution">Output resolution</label>
+          <select id="resolution">
+            <option value="150" selected>150 DPI — standard</option>
+            <option value="300">300 DPI — print quality</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint">Saving creates a new PDF without the password. Pages are flattened into images, so their text will no longer be selectable or searchable, and existing digital signatures will not be preserved.</p>
+    </section>
+
+    <div class="section-heading">
+      <h2>Optional visual signature</h2>
+      <span id="pageCount"></span>
+    </div>
+    <section class="signature-tools" aria-label="Signature options">
+      <div class="signature-fields">
+        <div class="field">
+          <label for="signatureMode">Visual mark style</label>
+          <select id="signatureMode">
+            <option value="typed">Type a name</option>
+            <option value="drawn">Draw a signature</option>
+          </select>
+        </div>
+        <div class="field" id="typedField">
+          <label for="signatureName">Name</label>
+          <input id="signatureName" type="text" maxlength="80" placeholder="Type your name">
+        </div>
+        <div class="field">
+          <label for="signatureSize">Size <span id="sizeLabel">30%</span></label>
+          <input id="signatureSize" type="range" min="10" max="80" step="1" value="30">
+        </div>
+      </div>
+      <div class="draw-tools" id="drawTools">
+        <canvas id="signaturePad" width="900" height="220" aria-label="Draw your signature here"></canvas>
+        <p class="signature-note">Draw with your mouse, finger, or stylus. The pad has a transparent background.</p>
+      </div>
+    </section>
+
+    <div class="section-heading">
+      <h2>Page preview</h2>
+      <span>Drag the visual mark to position it</span>
+    </div>
+    <div class="preview-wrap">
+      <canvas id="pagePreview" aria-label="PDF page preview with movable signature"></canvas>
+    </div>
+    <p class="preview-hint">The visual mark is added to the selected page only. It does not create a certificate-backed digital signature.</p>
+    <div class="actions">
+      <button class="primary-btn" id="saveBtn" type="button">Create unlocked PDF</button>
+      <button class="secondary-btn" id="clearBtn" type="button">Choose another PDF</button>
+    </div>
+    <div class="progress" id="progress" role="status">Preparing your PDF…</div>
+  </main>
+
+  <section class="result" id="result">
+    <h2>Your flattened PDF copy is ready</h2>
+    <p id="resultInfo"></p>
+    <a class="download-btn" id="downloadBtn" href="#" download="signed-unlocked.pdf">Download PDF</a>
+  </section>
+  <footer>No uploads. No accounts. Works offline.</footer>
+</div>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";
+
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+  const uploadSettings = document.getElementById("uploadSettings");
+  const selectedFile = document.getElementById("selectedFile");
+  const passwordInput = document.getElementById("password");
+  const openBtn = document.getElementById("openBtn");
+  const errorBox = document.getElementById("error");
+  const editor = document.getElementById("editor");
+  const pageSelect = document.getElementById("pageSelect");
+  const resolutionSelect = document.getElementById("resolution");
+  const signatureMode = document.getElementById("signatureMode");
+  const typedField = document.getElementById("typedField");
+  const signatureName = document.getElementById("signatureName");
+  const signatureSize = document.getElementById("signatureSize");
+  const sizeLabel = document.getElementById("sizeLabel");
+  const drawTools = document.getElementById("drawTools");
+  const signaturePad = document.getElementById("signaturePad");
+  const signatureContext = signaturePad.getContext("2d");
+  const pagePreview = document.getElementById("pagePreview");
+  const pagePreviewContext = pagePreview.getContext("2d");
+  const pageCountLabel = document.getElementById("pageCount");
+  const saveBtn = document.getElementById("saveBtn");
+  const progress = document.getElementById("progress");
+  const result = document.getElementById("result");
+  const resultInfo = document.getElementById("resultInfo");
+  const downloadBtn = document.getElementById("downloadBtn");
+  let selectedPdfFile = null;
+  let pdfDocument = null;
+  let previewPage = null;
+  let previewPageNumber = 0;
+  let loadToken = 0;
+  let isBusy = false;
+  let downloadUrl = null;
+  let signaturePosition = {x: 0.08, y: 0.78};
+  let isDraggingSignature = false;
+  let isDrawing = false;
+  let hasDrawnSignature = false;
+  const previewMaxEdge = 1400;
+
+  function showError(message){
+    errorBox.textContent = message;
+    errorBox.classList.add("show");
+  }
+
+  function clearError(){
+    errorBox.textContent = "";
+    errorBox.classList.remove("show");
+  }
+
+  function releaseDownload(){
+    if(downloadUrl) URL.revokeObjectURL(downloadUrl);
+    downloadUrl = null;
+    result.classList.remove("show");
+  }
+
+  function setBusy(busy){
+    isBusy = busy;
+    openBtn.disabled = busy;
+    saveBtn.disabled = busy || !pdfDocument;
+    progress.classList.toggle("show", busy);
+  }
+
+  function selectFile(file){
+    if(isBusy) return;
+    if(!file || (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf"))){
+      showError("Choose a valid PDF file.");
+      return;
+    }
+    selectedPdfFile = file;
+    selectedFile.textContent = `${file.name} · ${file.size < 1024 * 1024 ? `${Math.max(1, Math.round(file.size / 1024))} KB` : `${(file.size / (1024 * 1024)).toFixed(2)} MB`}`;
+    passwordInput.value = "";
+    uploadSettings.classList.add("show");
+    editor.classList.remove("show");
+    clearError();
+    releaseDownload();
+  }
+
+  async function openPdf(){
+    if(!selectedPdfFile || isBusy) return;
+    clearError();
+    releaseDownload();
+    const token = ++loadToken;
+    setBusy(true);
+    if(pdfDocument && pdfDocument.destroy) await pdfDocument.destroy();
+    pdfDocument = null;
+    try{
+      const bytes = new Uint8Array(await selectedPdfFile.arrayBuffer());
+      const task = pdfjsLib.getDocument({data: bytes, password: passwordInput.value || undefined});
+      pdfDocument = await task.promise;
+      if(token !== loadToken) return;
+      pageSelect.replaceChildren();
+      for(let number = 1; number <= pdfDocument.numPages; number++){
+        const option = document.createElement("option");
+        option.value = String(number);
+        option.textContent = `Page ${number}`;
+        pageSelect.appendChild(option);
+      }
+      pageSelect.value = "1";
+      pageCountLabel.textContent = `${pdfDocument.numPages} ${pdfDocument.numPages === 1 ? "page" : "pages"}`;
+      editor.classList.add("show");
+      signaturePosition = {x: 0.08, y: 0.78};
+      await renderPreviewPage(1, token);
+      if(token === loadToken) setBusy(false);
+    }catch(error){
+      if(token !== loadToken) return;
+      pdfDocument = null;
+      editor.classList.remove("show");
+      setBusy(false);
+      const passwordError = error && (error.name === "PasswordException" || error.code === pdfjsLib.PasswordResponses?.NEED_PASSWORD || error.code === pdfjsLib.PasswordResponses?.INCORRECT_PASSWORD);
+      showError(passwordError
+        ? "This PDF needs a password, or the password is incorrect. Enter the correct password and choose Open PDF again."
+        : (error instanceof Error ? error.message : "Couldn't open this PDF."));
+    }
+  }
+
+  function signatureImage(){
+    if(signatureMode.value === "drawn"){
+      return hasDrawnSignature ? signaturePad : null;
+    }
+    const name = signatureName.value.trim();
+    if(!name) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200;
+    canvas.height = 240;
+    const context = canvas.getContext("2d");
+    if(!context) return null;
+    context.fillStyle = "#201A12";
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    context.font = 'italic 160px "Segoe Script", "Brush Script MT", cursive';
+    context.fillText(name, 18, 122, 1160);
+    return canvas;
+  }
+
+  function signatureBounds(width, height){
+    const image = signatureImage();
+    if(!image) return null;
+    const targetWidth = width * Number(signatureSize.value) / 100;
+    const aspect = image.width / image.height;
+    const targetHeight = Math.min(targetWidth / aspect, height * .22);
+    const finalWidth = targetHeight * aspect;
+    return {
+      x: signaturePosition.x * width,
+      y: signaturePosition.y * height,
+      width: finalWidth,
+      height: targetHeight,
+      image
+    };
+  }
+
+  function paintSignature(context, width, height){
+    const bounds = signatureBounds(width, height);
+    if(bounds) context.drawImage(bounds.image, bounds.x, bounds.y, bounds.width, bounds.height);
+  }
+
+  async function renderPreviewPage(pageNumber, token){
+    if(!pdfDocument) return;
+    const page = await pdfDocument.getPage(pageNumber);
+    const baseViewport = page.getViewport({scale: 1});
+    const scale = Math.min(2, previewMaxEdge / Math.max(baseViewport.width, baseViewport.height));
+    const viewport = page.getViewport({scale});
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext("2d");
+    if(!context) throw new Error("This browser could not render the selected page.");
+    await page.render({canvasContext: context, viewport}).promise;
+    if(token !== loadToken) return;
+    previewPage = canvas;
+    previewPageNumber = pageNumber;
+    drawPreview();
+  }
+
+  function drawPreview(){
+    if(!previewPage) return;
+    pagePreview.width = previewPage.width;
+    pagePreview.height = previewPage.height;
+    pagePreviewContext.drawImage(previewPage, 0, 0);
+    paintSignature(pagePreviewContext, pagePreview.width, pagePreview.height);
+  }
+
+  async function createOutput(){
+    if(!pdfDocument || isBusy) return;
+    clearError();
+    releaseDownload();
+    setBusy(true);
+    try{
+      const {PDFDocument} = PDFLib;
+      const output = await PDFDocument.create();
+      const dpi = Number(resolutionSelect.value);
+      for(let number = 1; number <= pdfDocument.numPages; number++){
+        const originalPage = await pdfDocument.getPage(number);
+        const baseViewport = originalPage.getViewport({scale: 1});
+        const viewport = originalPage.getViewport({scale: dpi / 72});
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const context = canvas.getContext("2d");
+        if(!context) throw new Error("This browser could not prepare the output page.");
+        context.fillStyle = "#FFFFFF";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        await originalPage.render({canvasContext: context, viewport}).promise;
+        if(number === previewPageNumber) paintSignature(context, canvas.width, canvas.height);
+        const imageBytes = await new Promise((resolve, reject) => {
+          canvas.toBlob(blob => blob ? blob.arrayBuffer().then(resolve, reject) : reject(new Error(`Couldn't export page ${number}.`)), "image/jpeg", .94);
+        });
+        canvas.width = 0;
+        canvas.height = 0;
+        const image = await output.embedJpg(imageBytes);
+        const page = output.addPage([baseViewport.width, baseViewport.height]);
+        page.drawImage(image, {x: 0, y: 0, width: baseViewport.width, height: baseViewport.height});
+      }
+      const bytes = await output.save();
+      downloadUrl = URL.createObjectURL(new Blob([bytes], {type: "application/pdf"}));
+      downloadBtn.href = downloadUrl;
+      const hasVisualMark = Boolean(signatureImage());
+      downloadBtn.download = `${selectedPdfFile.name.replace(/\.pdf$/i, "")}${hasVisualMark ? "-unlocked-visual-mark" : "-unlocked"}.pdf`;
+      resultInfo.textContent = `${pdfDocument.numPages} ${pdfDocument.numPages === 1 ? "page" : "pages"} · ${dpi} DPI · Password protection removed${hasVisualMark ? " · Visual mark added" : ""} · Digital signatures not preserved`;
+      result.classList.add("show");
+    }catch(error){
+      console.error(error);
+      showError(error instanceof Error ? error.message : "Couldn't create the new PDF.");
+    }finally{
+      setBusy(false);
+    }
+  }
+
+  function eventPoint(event, canvas){
+    const bounds = canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - bounds.left) * canvas.width / bounds.width,
+      y: (event.clientY - bounds.top) * canvas.height / bounds.height
+    };
+  }
+
+  dropzone.addEventListener("click", () => { if(!isBusy) fileInput.click(); });
+  dropzone.addEventListener("keydown", event => {
+    if((event.key === "Enter" || event.key === " ") && !isBusy){ event.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener("change", event => {
+    selectFile(event.target.files[0]);
+    fileInput.value = "";
+  });
+  ["dragenter", "dragover"].forEach(name => dropzone.addEventListener(name, event => {
+    event.preventDefault();
+    if(!isBusy) dropzone.classList.add("drag");
+  }));
+  ["dragleave", "drop"].forEach(name => dropzone.addEventListener(name, event => {
+    event.preventDefault();
+    dropzone.classList.remove("drag");
+  }));
+  dropzone.addEventListener("drop", event => {
+    if(!isBusy) selectFile(event.dataTransfer.files[0]);
+  });
+  openBtn.addEventListener("click", openPdf);
+  passwordInput.addEventListener("keydown", event => {
+    if(event.key === "Enter") openPdf();
+  });
+  pageSelect.addEventListener("change", async () => {
+    if(!pdfDocument || isBusy) return;
+    clearError();
+    releaseDownload();
+    setBusy(true);
+    try{
+      await renderPreviewPage(Number(pageSelect.value), loadToken);
+    }catch(error){
+      showError(error instanceof Error ? error.message : "Couldn't render that page.");
+    }finally{
+      setBusy(false);
+    }
+  });
+  [signatureMode, signatureName, signatureSize].forEach(control => control.addEventListener(
+    control === signatureName || control === signatureSize ? "input" : "change",
+    () => {
+      typedField.style.display = signatureMode.value === "typed" ? "" : "none";
+      drawTools.classList.toggle("show", signatureMode.value === "drawn");
+      sizeLabel.textContent = `${signatureSize.value}%`;
+      releaseDownload();
+      drawPreview();
+    }
+  ));
+  signaturePad.addEventListener("pointerdown", event => {
+    if(signatureMode.value !== "drawn") return;
+    const point = eventPoint(event, signaturePad);
+    isDrawing = true;
+    hasDrawnSignature = true;
+    signaturePad.setPointerCapture(event.pointerId);
+    signatureContext.beginPath();
+    signatureContext.moveTo(point.x, point.y);
+  });
+  signaturePad.addEventListener("pointermove", event => {
+    if(!isDrawing) return;
+    const point = eventPoint(event, signaturePad);
+    signatureContext.strokeStyle = "#201A12";
+    signatureContext.lineWidth = 7;
+    signatureContext.lineCap = "round";
+    signatureContext.lineJoin = "round";
+    signatureContext.lineTo(point.x, point.y);
+    signatureContext.stroke();
+    signatureContext.beginPath();
+    signatureContext.moveTo(point.x, point.y);
+  });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(name => signaturePad.addEventListener(name, () => {
+    isDrawing = false;
+    releaseDownload();
+    drawPreview();
+  }));
+  pagePreview.addEventListener("pointerdown", event => {
+    if(!signatureImage()) return;
+    isDraggingSignature = true;
+    pagePreview.classList.add("dragging");
+    pagePreview.setPointerCapture(event.pointerId);
+    const point = eventPoint(event, pagePreview);
+    const bounds = signatureBounds(pagePreview.width, pagePreview.height);
+    if(bounds){
+      signaturePosition.x = Math.max(0, Math.min(1 - bounds.width / pagePreview.width, (point.x - bounds.width / 2) / pagePreview.width));
+      signaturePosition.y = Math.max(0, Math.min(1 - bounds.height / pagePreview.height, (point.y - bounds.height / 2) / pagePreview.height));
+      drawPreview();
+    }
+  });
+  pagePreview.addEventListener("pointermove", event => {
+    if(!isDraggingSignature) return;
+    const point = eventPoint(event, pagePreview);
+    const bounds = signatureBounds(pagePreview.width, pagePreview.height);
+    if(!bounds) return;
+    signaturePosition.x = Math.max(0, Math.min(1 - bounds.width / pagePreview.width, (point.x - bounds.width / 2) / pagePreview.width));
+    signaturePosition.y = Math.max(0, Math.min(1 - bounds.height / pagePreview.height, (point.y - bounds.height / 2) / pagePreview.height));
+    releaseDownload();
+    drawPreview();
+  });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach(name => pagePreview.addEventListener(name, () => {
+    isDraggingSignature = false;
+    pagePreview.classList.remove("dragging");
+  }));
+  saveBtn.addEventListener("click", createOutput);
+  document.getElementById("clearBtn").addEventListener("click", async () => {
+    if(isBusy) return;
+    ++loadToken;
+    if(pdfDocument && pdfDocument.destroy) await pdfDocument.destroy();
+    pdfDocument = null;
+    selectedPdfFile = null;
+    previewPage = null;
+    previewPageNumber = 0;
+    passwordInput.value = "";
+    signatureName.value = "";
+    signatureContext.clearRect(0, 0, signaturePad.width, signaturePad.height);
+    hasDrawnSignature = false;
+    editor.classList.remove("show");
+    uploadSettings.classList.remove("show");
+    clearError();
+    releaseDownload();
+    fileInput.value = "";
+  });
+</script>
+</body>
+</html>
