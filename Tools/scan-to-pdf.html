@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image scanner to PDF — Toolbox</title>
+<style>
+  :root{--page:#FBF9F4;--ink:#201A12;--ink-soft:#6B6153;--line:#E4DDCB;--teal-a:#1F5C52;--teal-b:#2E8577;--mint:#EAF3E8;--font-display:Georgia,"Iowan Old Style","Palatino Linotype",serif;--font-body:-apple-system,"Segoe UI","Helvetica Neue",Arial,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font-body);line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px 60px}
+  header{padding:30px 0 26px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .back{font:italic 18px var(--font-display);color:var(--ink);text-decoration:none}.back:hover{text-decoration:underline}
+  .badge{font-size:12.5px;color:var(--ink-soft);border:1px solid var(--line);padding:5px 12px;border-radius:999px}
+  h1{font:400 clamp(28px,4.4vw,40px)/1.1 var(--font-display);margin:4px 0 12px}
+  .lede{color:var(--ink-soft);font-size:15.5px;max-width:62ch;margin:0 0 24px}
+  .privacy{display:flex;gap:10px;align-items:flex-start;background:var(--mint);border:1px solid #CDE2D2;border-radius:12px;padding:12px 16px;font-size:13.5px;color:#245145;margin-bottom:20px}
+  .privacy svg{flex-shrink:0;margin-top:2px}
+  .dropzone{border:1.5px dashed var(--line);border-radius:18px;padding:32px 20px;text-align:center;background:#fff;transition:border-color 160ms ease,background 160ms ease}
+  .dropzone.drag{border-color:var(--teal-b);background:var(--mint)}
+  .dropzone .icon{width:44px;height:44px;margin:0 auto 12px}.dropzone .icon svg{width:100%;height:100%}
+  .dropzone p{margin:0;font-size:15px}.dropzone .sub{color:var(--ink-soft);font-size:13px;margin-top:6px}
+  .dropzone strong{color:var(--teal-a)}
+  input[type=file]{display:none}
+  .actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .primary-btn,.secondary-btn{border-radius:999px;padding:11px 18px;font:600 14px var(--font-body);cursor:pointer}
+  .primary-btn{border:0;background:var(--teal-a);color:#fff}.primary-btn:hover:not(:disabled){background:#17483F}.primary-btn:disabled{opacity:.5;cursor:default}
+  .secondary-btn{border:1px solid var(--line);background:#fff;color:var(--ink-soft)}.secondary-btn:hover:not(:disabled){border-color:var(--ink);color:var(--ink)}
+  .settings{display:none;margin-top:20px;padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff}.settings.show{display:block}
+  .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .field select{width:100%;padding:10px 11px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:14px var(--font-body)}
+  .hint{color:var(--ink-soft);font-size:12px;margin:5px 0 0}
+  .section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:22px 0 10px}
+  .section-heading h2{font:400 21px var(--font-display);margin:0}.section-heading span{color:var(--ink-soft);font-size:12.5px}
+  .page-list{display:grid;gap:10px}
+  .page-item{display:grid;grid-template-columns:minmax(130px,1fr) auto;align-items:center;gap:13px;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fff}
+  .page-info{min-width:0}.page-name{font-size:13px;font-weight:600;overflow-wrap:anywhere}.page-label{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .page-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+  .page-controls select{max-width:145px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:12px var(--font-body)}
+  .page-controls button{border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink-soft);padding:7px 9px;font:600 12px var(--font-body);cursor:pointer}
+  .page-controls button:hover:not(:disabled){border-color:var(--teal-a);color:var(--teal-a)}.page-controls button:disabled{opacity:.4;cursor:default}
+  .preview-panel{margin-top:28px;padding:24px;border:1px solid var(--line);border-radius:16px;background:#fbfaf7}
+  .preview-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+  .preview-heading h2{font:400 22px var(--font-display);margin:0}
+  .preview-heading select{min-width:180px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:13px var(--font-body)}
+  .preview-stage{min-height:540px;max-height:76vh;display:flex;align-items:center;justify-content:center;overflow:auto;padding:32px;background:#e9e4d8;border-radius:12px}
+  .preview-sheet{position:relative;flex:none}
+  .preview-canvas{display:block;width:100%;height:100%;background:#fff;box-shadow:0 8px 26px #201a1226}
+  .corner-editor{position:absolute;inset:0;width:100%;height:100%;overflow:visible;touch-action:none}
+  .corner-editor polygon{fill:#2e857733;stroke:#e7a93c;stroke-width:3;vector-effect:non-scaling-stroke}
+  .corner-editor circle{fill:#fff;stroke:#1f5c52;stroke-width:3;vector-effect:non-scaling-stroke;cursor:move;pointer-events:all}
+  .preview-caption{text-align:center;color:var(--ink-soft);font-size:12.5px;margin:14px 0 0}
+  .border-controls{margin-top:20px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:12px}
+  .border-controls-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .border-controls-head strong{font-size:14px}
+  .border-controls-head button{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--teal-a);padding:8px 13px;font:600 12px var(--font-body);cursor:pointer}
+  .border-controls-head button:hover{border-color:var(--teal-a)}
+  .border-help{margin:12px 0 0;color:var(--ink-soft);font-size:12px}
+  @media(max-height:700px){.preview-stage{min-height:400px}}
+  .error{display:none;margin-top:14px;padding:11px 14px;border-radius:10px;background:#F7E9EB;color:#7A2E3D;font-size:13.5px}.error.show{display:block}
+  .progress{display:none;margin-top:15px;color:var(--ink-soft);font-size:13px}.progress.show{display:block}
+  .progress-track{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-bottom:7px}.progress-fill{height:100%;width:0;background:var(--teal-b);transition:width 160ms ease}
+  .result{display:none;margin-top:18px;padding:16px;border:1px solid #CDE2D2;border-radius:14px;background:var(--mint)}.result.show{display:block}
+  .result h2{font:400 20px var(--font-display);margin:0 0 5px}.result p{font-size:13px;color:#245145;margin:0}
+  .download-btn{display:inline-flex;margin-top:12px;background:var(--teal-a);color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600}.download-btn:hover{background:#17483F}
+  footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft)}
+  a:focus-visible,button:focus-visible,.dropzone:focus-visible,select:focus-visible{outline:2px solid var(--teal-a);outline-offset:2px}
+  @media(max-width:680px){.page-item{grid-template-columns:1fr}.page-controls{justify-content:flex-start}.page-controls select{flex:1}.preview-panel{padding:16px}.preview-stage{min-height:360px;padding:16px}}
+  @media(max-width:480px){.wrap{padding:0 18px 48px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="../index.html">Toolbox</a>
+    <span class="badge">Runs on your device</span>
+  </header>
+  <h1>Image scanner to PDF</h1>
+  <p class="lede">Turn photos of documents into a clean, multi-page PDF. Add pictures from your device or camera, enhance each scan, rotate and reorder pages, then save your PDF.</p>
+
+  <div class="privacy">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#245145" stroke-width="1.4" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"></rect><path d="M5 7V5a3 3 0 0 1 6 0v2"></path></svg>
+    <span>Your scans stay on this device. Images are processed in your browser and are never uploaded.</span>
+  </div>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose document photos">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 44 44" fill="none" stroke="#1F5C52" stroke-width="1.6">
+        <path d="M11 4H27L36 13V39H11Z"></path><path d="M27 4V13H36"></path>
+        <path d="M16 22H31M16 28H31M16 34H26"></path><circle cx="7" cy="12" r="3"></circle><path d="M3 23C3 19 11 19 11 23"></path>
+      </svg>
+    </div>
+    <p><strong>Choose document photos</strong> or drop them here</p>
+    <p class="sub">Select multiple JPG, PNG, or WebP images. On mobile, use the camera button to scan a new page.</p>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" multiple>
+  </div>
+  <div class="actions">
+    <button class="secondary-btn" id="addPhotosBtn" type="button">Add photos</button>
+    <button class="secondary-btn" id="cameraBtn" type="button">Use camera</button>
+  </div>
+
+  <section class="settings" id="settings" aria-label="Scan and PDF settings">
+    <div class="settings-grid">
+      <div class="field">
+        <label for="pageSize">PDF page size</label>
+        <select id="pageSize"><option value="a4">A4</option><option value="letter">US Letter</option><option value="original">Match image</option></select>
+      </div>
+      <div class="field">
+        <label for="orientation">Page orientation</label>
+        <select id="orientation"><option value="auto">Auto (match photo)</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
+      </div>
+      <div class="field">
+        <label for="margin">Page margin</label>
+        <select id="margin"><option value="0">None</option><option value="12" selected>12 pt</option><option value="24">24 pt</option><option value="36">36 pt</option></select>
+      </div>
+      <div class="field">
+        <label for="quality">PDF image quality</label>
+        <select id="quality"><option value="0.82">Smaller file</option><option value="0.92" selected>Balanced</option><option value="0.98">High quality</option></select>
+        <p class="hint">All pages will be combined into one PDF.</p>
+      </div>
+    </div>
+    <div class="section-heading">
+      <h2>Scanned pages</h2>
+      <span id="pageCount"></span>
+    </div>
+    <div class="page-list" id="pageList"></div>
+    <div class="actions">
+      <button class="primary-btn" id="createBtn" type="button">Create scanned PDF</button>
+      <button class="secondary-btn" id="clearBtn" type="button">Clear all</button>
+    </div>
+    <section class="preview-panel" aria-label="Live scan preview">
+      <div class="preview-heading">
+        <h2>Live preview</h2>
+        <select id="previewPage" aria-label="Choose page to preview"></select>
+      </div>
+      <div class="preview-stage">
+        <div class="preview-sheet" id="previewSheet">
+          <canvas class="preview-canvas" id="scanPreview" role="img" aria-label="Document photo with adjustable crop corners"></canvas>
+          <svg class="corner-editor" id="cornerEditor" aria-label="Drag the corner handles to select the document edges"></svg>
+        </div>
+      </div>
+      <p class="preview-caption" id="previewCaption">Add a page to see its live preview.</p>
+      <div class="border-controls">
+        <div class="border-controls-head">
+          <strong>Document borders</strong>
+          <button id="autoDetectBtn" type="button">Auto-detect borders</button>
+        </div>
+        <p class="border-help">Drag the four points directly on the photo to match the document corners. The selected quadrilateral is straightened when the PDF is created.</p>
+      </div>
+    </section>
+  </section>
+  <div class="error" id="error" role="alert"></div>
+  <div class="progress" id="progress" aria-live="polite">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span id="progressLabel">Preparing scans…</span>
+  </div>
+  <section class="result" id="result" aria-live="polite">
+    <h2>Your scanned PDF is ready</h2>
+    <p id="resultInfo"></p>
+    <a class="download-btn" id="downloadBtn" href="#" download="scanned-document.pdf">Download PDF</a>
+  </section>
+  <footer>No uploads. No accounts. Works offline.</footer>
+</div>
+<script src="lib/pdf-lib.min.js"></script>
+<script>
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+  const cameraInput = document.getElementById("cameraInput");
+  const settings = document.getElementById("settings");
+  const pageList = document.getElementById("pageList");
+  const pageCount = document.getElementById("pageCount");
+  const previewPageSelect = document.getElementById("previewPage");
+  const scanPreview = document.getElementById("scanPreview");
+  const previewCaption = document.getElementById("previewCaption");
+  const previewStage = document.querySelector(".preview-stage");
+  const previewSheet = document.getElementById("previewSheet");
+  const cornerEditor = document.getElementById("cornerEditor");
+  const createBtn = document.getElementById("createBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const errorBox = document.getElementById("error");
+  const progress = document.getElementById("progress");
+  const progressFill = document.getElementById("progressFill");
+  const progressLabel = document.getElementById("progressLabel");
+  const result = document.getElementById("result");
+  const resultInfo = document.getElementById("resultInfo");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const pageSizeSelect = document.getElementById("pageSize");
+  const orientationSelect = document.getElementById("orientation");
+  const marginSelect = document.getElementById("margin");
+  const qualitySelect = document.getElementById("quality");
+  let pages = [];
+  let resultUrl = null;
+  let isCreating = false;
+  let selectedPreviewIndex = 0;
+  let activePreviewRender = 0;
+  let draggedCorner = -1;
+
+  function showError(message){
+    errorBox.textContent = message;
+    errorBox.classList.add("show");
+  }
+
+  function clearResult(){
+    if(resultUrl) URL.revokeObjectURL(resultUrl);
+    resultUrl = null;
+    result.classList.remove("show");
+    downloadBtn.removeAttribute("href");
+  }
+
+  function addFiles(fileList){
+    if(isCreating) return;
+    const selected = Array.from(fileList || []);
+    const valid = selected.filter(file => file.type.startsWith("image/"));
+    const existing = new Set(pages.map(page => `${page.file.name}:${page.file.size}:${page.file.lastModified}`));
+    valid.forEach(file => {
+      const key = `${file.name}:${file.size}:${file.lastModified}`;
+      if(existing.has(key)) return;
+      existing.add(key);
+      pages.push({file, url:URL.createObjectURL(file), rotation:0, filter:"original", bounds:null, quad:null, autoDetect:true, previewVersion:0});
+    });
+    errorBox.classList.remove("show");
+    clearResult();
+    renderPages();
+    if(valid.length !== selected.length) showError("Some selected files were skipped. Choose image files such as JPG, PNG, or WebP.");
+  }
+
+  function renderPages(){
+    pageList.replaceChildren();
+    pages.forEach((page, index) => {
+      const item = document.createElement("article");
+      item.className = "page-item";
+      const info = document.createElement("div");
+      info.className = "page-info";
+      const name = document.createElement("div");
+      name.className = "page-name";
+      name.textContent = `Page ${index + 1} · ${page.file.name}`;
+      const label = document.createElement("div");
+      label.className = "page-label";
+      label.textContent = "Adjust scan effect, rotation, or order";
+      info.append(name, label);
+      const controls = document.createElement("div");
+      controls.className = "page-controls";
+      const filter = document.createElement("select");
+      filter.setAttribute("aria-label", `Scan effect for page ${index + 1}`);
+      [["original","Original"],["document","Document (B&W)"],["grayscale","Grayscale"],["enhance","Color enhance"]].forEach(([value, text]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        filter.appendChild(option);
+      });
+      filter.value = page.filter;
+      filter.addEventListener("change", () => { page.filter = filter.value; clearResult(); if(pages[selectedPreviewIndex] === page) updatePreview(page, scanPreview); });
+      const rotate = document.createElement("button");
+      rotate.type = "button";
+      rotate.textContent = "Rotate";
+      rotate.setAttribute("aria-label", `Rotate page ${index + 1}`);
+      rotate.addEventListener("click", () => { page.rotation = (page.rotation + 90) % 360; page.bounds = null; page.quad = null; page.autoDetect = true; clearResult(); renderPages(); });
+      const up = document.createElement("button");
+      up.type = "button";
+      up.textContent = "↑";
+      up.setAttribute("aria-label", `Move page ${index + 1} up`);
+      up.disabled = index === 0;
+      up.addEventListener("click", () => movePage(index, index - 1));
+      const down = document.createElement("button");
+      down.type = "button";
+      down.textContent = "↓";
+      down.setAttribute("aria-label", `Move page ${index + 1} down`);
+      down.disabled = index === pages.length - 1;
+      down.addEventListener("click", () => movePage(index, index + 1));
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", `Remove page ${index + 1}`);
+      remove.addEventListener("click", () => removePage(index));
+      controls.append(filter, rotate, up, down, remove);
+      item.append(info, controls);
+      pageList.appendChild(item);
+    });
+    pageCount.textContent = `${pages.length} ${pages.length === 1 ? "page" : "pages"}`;
+    settings.classList.toggle("show", pages.length > 0);
+    createBtn.disabled = pages.length === 0 || isCreating;
+    selectedPreviewIndex = Math.min(selectedPreviewIndex, Math.max(0, pages.length - 1));
+    renderPreviewSelector();
+    if(pages.length){
+      updatePreview(pages[selectedPreviewIndex], scanPreview);
+    }
+    else {
+      scanPreview.width = 0;
+      scanPreview.height = 0;
+      cornerEditor.replaceChildren();
+      previewSheet.style.width = "0";
+      previewSheet.style.height = "0";
+    }
+  }
+
+  function renderPreviewSelector(){
+    previewPageSelect.replaceChildren();
+    pages.forEach((page, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = `Page ${index + 1} · ${page.file.name}`;
+      previewPageSelect.appendChild(option);
+    });
+    previewPageSelect.value = String(selectedPreviewIndex);
+    previewPageSelect.disabled = pages.length < 2;
+    previewCaption.textContent = pages.length
+      ? `Previewing page ${selectedPreviewIndex + 1} of ${pages.length}. Changes appear here before you create the PDF.`
+      : "Add a page to see its live preview.";
+  }
+
+  function boundsToQuad(bounds){
+    return [
+      {x:bounds.left,y:bounds.top},
+      {x:1 - bounds.right,y:bounds.top},
+      {x:1 - bounds.right,y:1 - bounds.bottom},
+      {x:bounds.left,y:1 - bounds.bottom}
+    ];
+  }
+
+  function updateCornerEditor(page, imageRect, canvas){
+    const width = canvas.width;
+    const height = canvas.height;
+    cornerEditor.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    cornerEditor.dataset.imageX = String(imageRect.x);
+    cornerEditor.dataset.imageY = String(imageRect.y);
+    cornerEditor.dataset.imageWidth = String(imageRect.width);
+    cornerEditor.dataset.imageHeight = String(imageRect.height);
+    cornerEditor.replaceChildren();
+    if(!page || !page.quad) return;
+    const points = page.quad.map(point => ({
+      x:imageRect.x + point.x * imageRect.width,
+      y:imageRect.y + point.y * imageRect.height
+    }));
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    polygon.setAttribute("points", points.map(point => `${point.x},${point.y}`).join(" "));
+    cornerEditor.appendChild(polygon);
+    points.forEach((point, index) => {
+      const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      handle.setAttribute("cx", String(point.x));
+      handle.setAttribute("cy", String(point.y));
+      handle.setAttribute("r", String(Math.max(13, width * 0.016)));
+      handle.dataset.corner = String(index);
+      handle.setAttribute("aria-label", `Document corner ${index + 1}`);
+      cornerEditor.appendChild(handle);
+    });
+  }
+
+  function updateCornerPositions(page){
+    const imageRect = {
+      x:Number(cornerEditor.dataset.imageX),
+      y:Number(cornerEditor.dataset.imageY),
+      width:Number(cornerEditor.dataset.imageWidth),
+      height:Number(cornerEditor.dataset.imageHeight)
+    };
+    const points = page.quad.map(point => ({
+      x:imageRect.x + point.x * imageRect.width,
+      y:imageRect.y + point.y * imageRect.height
+    }));
+    const polygon = cornerEditor.querySelector("polygon");
+    if(polygon) polygon.setAttribute("points", points.map(point => `${point.x},${point.y}`).join(" "));
+    points.forEach((point, index) => {
+      const handle = cornerEditor.querySelector(`[data-corner="${index}"]`);
+      if(handle){
+        handle.setAttribute("cx", String(point.x));
+        handle.setAttribute("cy", String(point.y));
+      }
+    });
+  }
+
+  function isValidQuad(quad){
+    const crosses = quad.map((point, index) => {
+      const next = quad[(index + 1) % quad.length];
+      const after = quad[(index + 2) % quad.length];
+      return (next.x - point.x) * (after.y - next.y) - (next.y - point.y) * (after.x - next.x);
+    });
+    return crosses.every(value => value > 0.002) || crosses.every(value => value < -0.002);
+  }
+
+  function moveSelectedCorner(event){
+    if(draggedCorner < 0) return;
+    const page = pages[selectedPreviewIndex];
+    if(!page) return;
+    const rect = cornerEditor.getBoundingClientRect();
+    const svgPoint = {
+      x:(event.clientX - rect.left) / rect.width * scanPreview.width,
+      y:(event.clientY - rect.top) / rect.height * scanPreview.height
+    };
+    const imageRect = {
+      x:Number(cornerEditor.dataset.imageX),
+      y:Number(cornerEditor.dataset.imageY),
+      width:Number(cornerEditor.dataset.imageWidth),
+      height:Number(cornerEditor.dataset.imageHeight)
+    };
+    const candidate = page.quad.map(point => ({...point}));
+    candidate[draggedCorner] = {
+      x:Math.max(0,Math.min(1,(svgPoint.x - imageRect.x) / imageRect.width)),
+      y:Math.max(0,Math.min(1,(svgPoint.y - imageRect.y) / imageRect.height))
+    };
+    if(!isValidQuad(candidate)) return;
+    page.quad = candidate;
+    page.autoDetect = false;
+    page.bounds = null;
+    clearResult();
+    updateCornerPositions(page);
+  }
+
+  function movePage(from, to){
+    if(isCreating || to < 0 || to >= pages.length) return;
+    pages.splice(to, 0, pages.splice(from, 1)[0]);
+    clearResult();
+    renderPages();
+  }
+
+  function removePage(index){
+    if(isCreating) return;
+    URL.revokeObjectURL(pages[index].url);
+    pages.splice(index, 1);
+    clearResult();
+    renderPages();
+  }
+
+  function loadImage(file){
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const url = URL.createObjectURL(file);
+      image.onload = () => {
+        URL.revokeObjectURL(url);
+        if(!image.naturalWidth || !image.naturalHeight){ reject(new Error(`Could not read dimensions for "${file.name}".`)); return; }
+        resolve(image);
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error(`Could not open "${file.name}". The image may be damaged or unsupported.`));
+      };
+      image.src = url;
+    });
+  }
+
+  function detectDocumentBounds(canvas){
+    const context = canvas.getContext("2d", {willReadFrequently:true});
+    if(!context) return {left:0,right:0,top:0,bottom:0};
+    const {width,height} = canvas;
+    const pixels = context.getImageData(0, 0, width, height).data;
+    const borderLuminance = [];
+    const centerLuminance = [];
+    const edgeX = Math.max(1, Math.round(width * 0.04));
+    const edgeY = Math.max(1, Math.round(height * 0.04));
+    const sampleStep = Math.max(1, Math.floor(Math.max(width, height) / 900));
+    for(let y = 0; y < height; y += sampleStep){
+      for(let x = 0; x < width; x += sampleStep){
+        const offset = (y * width + x) * 4;
+        const luminance = 0.299 * pixels[offset] + 0.587 * pixels[offset + 1] + 0.114 * pixels[offset + 2];
+        if(x < edgeX || x >= width - edgeX || y < edgeY || y >= height - edgeY) borderLuminance.push(luminance);
+        else if(x > width * 0.35 && x < width * 0.65 && y > height * 0.35 && y < height * 0.65) centerLuminance.push(luminance);
+      }
+    }
+    if(borderLuminance.length === 0 || centerLuminance.length === 0) return {left:0,right:0,top:0,bottom:0};
+    borderLuminance.sort((a,b) => a-b);
+    centerLuminance.sort((a,b) => a-b);
+    const background = borderLuminance[Math.floor(borderLuminance.length / 2)];
+    const center = centerLuminance[Math.floor(centerLuminance.length / 2)];
+    if(Math.abs(center - background) < 18) return {left:0,right:0,top:0,bottom:0};
+    const documentIsLighter = center > background;
+    const threshold = (background + center) / 2;
+    const rowCounts = new Uint32Array(height);
+    const columnCounts = new Uint32Array(width);
+    for(let y = 0; y < height; y += sampleStep){
+      for(let x = 0; x < width; x += sampleStep){
+        const offset = (y * width + x) * 4;
+        const luminance = 0.299 * pixels[offset] + 0.587 * pixels[offset + 1] + 0.114 * pixels[offset + 2];
+        if(documentIsLighter ? luminance >= threshold : luminance <= threshold){
+          rowCounts[y] += sampleStep;
+          columnCounts[x] += sampleStep;
+        }
+      }
+    }
+    const firstAbove = (counts, limit, stride) => {
+      for(let i = 0; i < counts.length; i += stride) if(counts[i] >= limit) return i;
+      return -1;
+    };
+    const lastAbove = (counts, limit, stride) => {
+      for(let i = counts.length - 1; i >= 0; i -= stride) if(counts[i] >= limit) return i;
+      return -1;
+    };
+    const top = firstAbove(rowCounts, width * 0.35, sampleStep);
+    const bottom = lastAbove(rowCounts, width * 0.35, sampleStep);
+    const left = firstAbove(columnCounts, height * 0.35, sampleStep);
+    const right = lastAbove(columnCounts, height * 0.35, sampleStep);
+    if(left < 0 || right <= left || top < 0 || bottom <= top) return {left:0,right:0,top:0,bottom:0};
+    const bounds = {
+      left:left / width,
+      right:(width - right) / width,
+      top:top / height,
+      bottom:(height - bottom) / height
+    };
+    if(bounds.left > 0.45 || bounds.right > 0.45 || bounds.top > 0.45 || bounds.bottom > 0.45 ||
+      bounds.left + bounds.right > 0.85 || bounds.top + bounds.bottom > 0.85) return {left:0,right:0,top:0,bottom:0};
+    return bounds;
+  }
+
+  async function renderScanCanvas(page, maxDimension){
+    const image = await loadImage(page.file);
+    const rotated = page.rotation % 180 !== 0;
+    const sourceWidth = rotated ? image.naturalHeight : image.naturalWidth;
+    const sourceHeight = rotated ? image.naturalWidth : image.naturalHeight;
+    const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+    const orientedCanvas = document.createElement("canvas");
+    orientedCanvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    orientedCanvas.height = Math.max(1, Math.round(sourceHeight * scale));
+    const orientedContext = orientedCanvas.getContext("2d");
+    if(!orientedContext) throw new Error("This browser could not process the selected image.");
+    orientedContext.translate(orientedCanvas.width / 2, orientedCanvas.height / 2);
+    orientedContext.rotate(page.rotation * Math.PI / 180);
+    const imageWidth = Math.round(image.naturalWidth * scale);
+    const imageHeight = Math.round(image.naturalHeight * scale);
+    orientedContext.drawImage(image, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
+    if(page.autoDetect && !page.bounds){
+      page.bounds = detectDocumentBounds(orientedCanvas);
+      page.quad = boundsToQuad(page.bounds);
+    }
+    if(!page.bounds) page.bounds = {left:0,right:0,top:0,bottom:0};
+    if(!page.quad) page.quad = boundsToQuad(page.bounds);
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = orientedCanvas.width;
+    sourceCanvas.height = orientedCanvas.height;
+    const sourceContext = sourceCanvas.getContext("2d");
+    if(!sourceContext) throw new Error("This browser could not prepare the scan preview.");
+    sourceContext.filter = page.filter === "grayscale" ? "grayscale(1)" :
+      page.filter === "enhance" ? "saturate(1.35) contrast(1.12)" :
+      page.filter === "document" ? "grayscale(1) contrast(1.8) brightness(1.08)" : "none";
+    sourceContext.drawImage(orientedCanvas, 0, 0);
+    sourceContext.filter = "none";
+    if(page.filter === "document"){
+      const pixels = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+      for(let i = 0; i < pixels.data.length; i += 4){
+        const value = pixels.data[i] > 168 ? 255 : 0;
+        pixels.data[i] = value;
+        pixels.data[i + 1] = value;
+        pixels.data[i + 2] = value;
+      }
+      sourceContext.putImageData(pixels, 0, 0);
+    }
+    const sourcePoints = page.quad.map(point => ({x:point.x * orientedCanvas.width,y:point.y * orientedCanvas.height}));
+    const distance = (first, second) => Math.hypot(second.x - first.x, second.y - first.y);
+    const croppedWidth = Math.max(1, Math.round(Math.max(distance(sourcePoints[0], sourcePoints[1]), distance(sourcePoints[3], sourcePoints[2]))));
+    const croppedHeight = Math.max(1, Math.round(Math.max(distance(sourcePoints[0], sourcePoints[3]), distance(sourcePoints[1], sourcePoints[2]))));
+    const canvas = document.createElement("canvas");
+    canvas.width = croppedWidth;
+    canvas.height = croppedHeight;
+    const context = canvas.getContext("2d");
+    if(!context) throw new Error("This browser could not process the selected image.");
+    drawMappedTriangle(context, sourceCanvas, [sourcePoints[0],sourcePoints[1],sourcePoints[3]], [{x:0,y:0},{x:croppedWidth,y:0},{x:0,y:croppedHeight}]);
+    drawMappedTriangle(context, sourceCanvas, [sourcePoints[1],sourcePoints[2],sourcePoints[3]], [{x:croppedWidth,y:0},{x:croppedWidth,y:croppedHeight},{x:0,y:croppedHeight}]);
+    context.filter = "none";
+    orientedCanvas.width = 0;
+    orientedCanvas.height = 0;
+    return {canvas, sourceCanvas, width:croppedWidth / scale, height:croppedHeight / scale};
+  }
+
+  function drawMappedTriangle(context, source, sourcePoints, destinationPoints){
+    const [p0,p1,p2] = sourcePoints;
+    const [q0,q1,q2] = destinationPoints;
+    const denominator = p0.x * (p1.y - p2.y) + p1.x * (p2.y - p0.y) + p2.x * (p0.y - p1.y);
+    if(Math.abs(denominator) < 0.001) throw new Error("The selected document corners are too close together.");
+    const a = (q0.x * (p1.y - p2.y) + q1.x * (p2.y - p0.y) + q2.x * (p0.y - p1.y)) / denominator;
+    const c = (q0.x * (p2.x - p1.x) + q1.x * (p0.x - p2.x) + q2.x * (p1.x - p0.x)) / denominator;
+    const e = (q0.x * (p1.x * p2.y - p2.x * p1.y) + q1.x * (p2.x * p0.y - p0.x * p2.y) + q2.x * (p0.x * p1.y - p1.x * p0.y)) / denominator;
+    const b = (q0.y * (p1.y - p2.y) + q1.y * (p2.y - p0.y) + q2.y * (p0.y - p1.y)) / denominator;
+    const d = (q0.y * (p2.x - p1.x) + q1.y * (p0.x - p2.x) + q2.y * (p1.x - p0.x)) / denominator;
+    const f = (q0.y * (p1.x * p2.y - p2.x * p1.y) + q1.y * (p2.x * p0.y - p0.x * p2.y) + q2.y * (p0.x * p1.y - p1.x * p0.y)) / denominator;
+    context.save();
+    context.beginPath();
+    context.moveTo(q0.x,q0.y);
+    context.lineTo(q1.x,q1.y);
+    context.lineTo(q2.x,q2.y);
+    context.closePath();
+    context.clip();
+    context.setTransform(a,b,c,d,e,f);
+    context.drawImage(source,0,0);
+    context.restore();
+  }
+
+  async function updatePreview(page, target){
+    const version = ++page.previewVersion;
+    const renderId = ++activePreviewRender;
+    target.setAttribute("aria-busy", "true");
+    try{
+      const rendered = await renderScanCanvas(page, 1400);
+      if(version !== page.previewVersion || renderId !== activePreviewRender || !target.isConnected){
+        rendered.canvas.width = 0;
+        rendered.canvas.height = 0;
+        rendered.sourceCanvas.width = 0;
+        rendered.sourceCanvas.height = 0;
+        return;
+      }
+      const [pageWidth, pageHeight] = pageDimensions(rendered.width, rendered.height);
+      const pageScale = 1200 / Math.max(pageWidth, pageHeight);
+      target.width = Math.max(1, Math.round(pageWidth * pageScale));
+      target.height = Math.max(1, Math.round(pageHeight * pageScale));
+      const stageStyle = window.getComputedStyle(previewStage);
+      const horizontalPadding = parseFloat(stageStyle.paddingLeft) + parseFloat(stageStyle.paddingRight);
+      const verticalPadding = parseFloat(stageStyle.paddingTop) + parseFloat(stageStyle.paddingBottom);
+      const maxDisplayWidth = Math.max(1, Math.min(900, previewStage.clientWidth - horizontalPadding));
+      const maxDisplayHeight = Math.max(1, Math.min(window.innerHeight * 0.7, previewStage.clientHeight - verticalPadding));
+      const displayScale = Math.min(maxDisplayWidth / target.width, maxDisplayHeight / target.height);
+      previewSheet.style.width = `${Math.round(target.width * displayScale)}px`;
+      previewSheet.style.height = `${Math.round(target.height * displayScale)}px`;
+      const context = target.getContext("2d");
+      if(!context) throw new Error("This browser could not display the scan preview.");
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, target.width, target.height);
+      const pageMargin = Number(marginSelect.value) * pageScale;
+      const sourceCanvas = rendered.sourceCanvas;
+      const imageScale = Math.min(
+        (target.width - pageMargin * 2) / sourceCanvas.width,
+        (target.height - pageMargin * 2) / sourceCanvas.height
+      );
+      const imageWidth = sourceCanvas.width * imageScale;
+      const imageHeight = sourceCanvas.height * imageScale;
+      const imageRect = {x:(target.width - imageWidth) / 2,y:(target.height - imageHeight) / 2,width:imageWidth,height:imageHeight};
+      context.drawImage(sourceCanvas, imageRect.x, imageRect.y, imageWidth, imageHeight);
+      updateCornerEditor(page, imageRect, target);
+      rendered.canvas.width = 0;
+      rendered.canvas.height = 0;
+      sourceCanvas.width = 0;
+      sourceCanvas.height = 0;
+      target.removeAttribute("aria-busy");
+    }catch(error){
+      if(version !== page.previewVersion || renderId !== activePreviewRender || !target.isConnected) return;
+      target.removeAttribute("aria-busy");
+      showError(error instanceof Error ? error.message : "Couldn't update the scan preview.");
+    }
+  }
+
+  async function preparePage(page){
+    const rendered = await renderScanCanvas(page, 2500);
+    const blob = await new Promise(resolve => rendered.canvas.toBlob(resolve, "image/jpeg", Number(qualitySelect.value)));
+    rendered.canvas.width = 0;
+    rendered.canvas.height = 0;
+    rendered.sourceCanvas.width = 0;
+    rendered.sourceCanvas.height = 0;
+    if(!blob) throw new Error(`Could not prepare "${page.file.name}" for the PDF.`);
+    return {blob, width:rendered.width, height:rendered.height};
+  }
+
+  function pageDimensions(width, height){
+    const size = pageSizeSelect.value;
+    if(size === "original") return [width * 0.75, height * 0.75];
+    const base = size === "letter" ? [612, 792] : [595.28, 841.89];
+    let landscape = orientationSelect.value === "landscape";
+    if(orientationSelect.value === "auto") landscape = width > height;
+    if(orientationSelect.value === "portrait") landscape = false;
+    return landscape ? [base[1], base[0]] : base;
+  }
+
+  async function createPdf(){
+    if(isCreating || pages.length === 0) return;
+    if(!window.PDFLib){ showError("The PDF library could not load. Make sure Tools/lib/pdf-lib.min.js is available."); return; }
+    isCreating = true;
+    clearResult();
+    errorBox.classList.remove("show");
+    progress.classList.add("show");
+    progressFill.style.width = "0%";
+    renderPages();
+    try{
+      const pdf = await PDFLib.PDFDocument.create();
+      for(let index = 0; index < pages.length; index++){
+        progressLabel.textContent = `Preparing page ${index + 1} of ${pages.length}…`;
+        const prepared = await preparePage(pages[index]);
+        const image = await pdf.embedJpg(await prepared.blob.arrayBuffer());
+        const [pageWidth, pageHeight] = pageDimensions(prepared.width, prepared.height);
+        const margin = Number(marginSelect.value);
+        const availableWidth = Math.max(1, pageWidth - margin * 2);
+        const availableHeight = Math.max(1, pageHeight - margin * 2);
+        const fit = Math.min(availableWidth / image.width, availableHeight / image.height);
+        const drawWidth = image.width * fit;
+        const drawHeight = image.height * fit;
+        const page = pdf.addPage([pageWidth, pageHeight]);
+        page.drawImage(image, {x:(pageWidth - drawWidth) / 2, y:(pageHeight - drawHeight) / 2, width:drawWidth, height:drawHeight});
+        progressFill.style.width = `${Math.round(((index + 1) / pages.length) * 85)}%`;
+      }
+      progressLabel.textContent = "Saving PDF…";
+      const pdfBytes = await pdf.save();
+      const blob = new Blob([pdfBytes], {type:"application/pdf"});
+      resultUrl = URL.createObjectURL(blob);
+      downloadBtn.href = resultUrl;
+      downloadBtn.download = "scanned-document.pdf";
+      resultInfo.textContent = `${pages.length} ${pages.length === 1 ? "page" : "pages"} · PDF · ${blob.size < 1024 * 1024 ? `${Math.round(blob.size / 1024)} KB` : `${(blob.size / (1024 * 1024)).toFixed(2)} MB`}`;
+      result.classList.add("show");
+      progressFill.style.width = "100%";
+      progressLabel.textContent = "Your PDF is ready.";
+    }catch(error){
+      console.error(error);
+      showError(error instanceof Error ? error.message : "Couldn't create the scanned PDF.");
+    }finally{
+      isCreating = false;
+      renderPages();
+      window.setTimeout(() => progress.classList.remove("show"), 900);
+    }
+  }
+
+  dropzone.addEventListener("click", () => { if(!isCreating) fileInput.click(); });
+  dropzone.addEventListener("keydown", event => {
+    if((event.key === "Enter" || event.key === " ") && !isCreating){ event.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener("change", event => { addFiles(event.target.files); fileInput.value = ""; });
+  cameraInput.addEventListener("change", event => { addFiles(event.target.files); cameraInput.value = ""; });
+  document.getElementById("addPhotosBtn").addEventListener("click", () => { if(!isCreating) fileInput.click(); });
+  document.getElementById("cameraBtn").addEventListener("click", () => { if(!isCreating) cameraInput.click(); });
+  ["dragenter","dragover"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); if(!isCreating) dropzone.classList.add("drag"); }));
+  ["dragleave","drop"].forEach(name => dropzone.addEventListener(name, event => { event.preventDefault(); dropzone.classList.remove("drag"); }));
+  dropzone.addEventListener("drop", event => addFiles(event.dataTransfer.files));
+  [pageSizeSelect, orientationSelect, marginSelect].forEach(control => control.addEventListener("change", () => {
+    clearResult();
+    if(pages[selectedPreviewIndex]) updatePreview(pages[selectedPreviewIndex], scanPreview);
+  }));
+  window.addEventListener("resize", () => {
+    if(pages[selectedPreviewIndex]) updatePreview(pages[selectedPreviewIndex], scanPreview);
+  });
+  qualitySelect.addEventListener("change", clearResult);
+  previewPageSelect.addEventListener("change", () => {
+    selectedPreviewIndex = Number(previewPageSelect.value);
+    renderPreviewSelector();
+    if(pages[selectedPreviewIndex]) updatePreview(pages[selectedPreviewIndex], scanPreview);
+  });
+  cornerEditor.addEventListener("pointerdown", event => {
+    const handle = event.target.closest("[data-corner]");
+    if(!handle || isCreating) return;
+    draggedCorner = Number(handle.dataset.corner);
+    cornerEditor.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+  cornerEditor.addEventListener("pointermove", moveSelectedCorner);
+  cornerEditor.addEventListener("pointerup", event => {
+    if(draggedCorner < 0) return;
+    moveSelectedCorner(event);
+    draggedCorner = -1;
+    if(pages[selectedPreviewIndex]) updatePreview(pages[selectedPreviewIndex], scanPreview);
+  });
+  cornerEditor.addEventListener("pointercancel", () => { draggedCorner = -1; });
+  document.getElementById("autoDetectBtn").addEventListener("click", () => {
+    const page = pages[selectedPreviewIndex];
+    if(!page) return;
+    page.bounds = null;
+    page.quad = null;
+    page.autoDetect = true;
+    clearResult();
+    updatePreview(page, scanPreview);
+  });
+  createBtn.addEventListener("click", createPdf);
+  clearBtn.addEventListener("click", () => {
+    if(isCreating) return;
+    pages.forEach(page => URL.revokeObjectURL(page.url));
+    pages = [];
+    clearResult();
+    errorBox.classList.remove("show");
+    renderPages();
+  });
+</script>
+</body>
+</html>
