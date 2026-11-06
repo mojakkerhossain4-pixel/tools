@@ -87,7 +87,7 @@
     <span class="badge">Runs on your device</span>
   </header>
   <h1>ID card PDF</h1>
-  <p class="lede">Place two pages from a PDF together on one print-ready A4 page. Choose a side-by-side or stacked layout, then drag and zoom each page independently. Your document stays in your browser.</p>
+  <p class="lede">Place two pages from a PDF together on one print-ready A4 page. Choose landscape or portrait orientation and arrange the pages side by side or up and down, then drag and zoom each page independently. Your document stays in your browser.</p>
   <div class="note">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#245145" stroke-width="1.4"><circle cx="8" cy="8" r="6.5"></circle><line x1="8" y1="7" x2="8" y2="11.5"></line><circle cx="8" cy="4.7" r="0.6" fill="#245145" stroke="none"></circle></svg>
     <span>Choose the PDF pages for the front and back. Drag either preview to reposition it; use its zoom slider to scale it within its half of the A4 sheet.</span>
@@ -104,13 +104,20 @@
 
   <main class="workspace" id="workspace">
     <p class="file-summary" id="fileSummary"></p>
-    <section class="settings" aria-label="A4 layout options">
+    <section class="settings" aria-label="A4 page options">
       <div class="settings-grid">
         <div class="field">
-          <label for="layout">A4 layout</label>
-          <select id="layout">
-            <option value="horizontal">Horizontal — sides side by side</option>
-            <option value="vertical">Vertical — sides stacked</option>
+          <label for="orientation">Page orientation</label>
+          <select id="orientation">
+            <option value="landscape">Landscape</option>
+            <option value="portrait">Portrait</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="arrangement">Side arrangement</label>
+          <select id="arrangement">
+            <option value="side-by-side">Side by side</option>
+            <option value="up-down">Up and down</option>
           </select>
         </div>
         <div class="field">
@@ -207,7 +214,8 @@
   const workspace = document.getElementById("workspace");
   const errorBox = document.getElementById("error");
   const fileSummary = document.getElementById("fileSummary");
-  const layoutSelect = document.getElementById("layout");
+  const orientationSelect = document.getElementById("orientation");
+  const arrangementSelect = document.getElementById("arrangement");
   const marginSelect = document.getElementById("margin");
   const gapSelect = document.getElementById("gap");
   const resolutionSelect = document.getElementById("resolution");
@@ -332,22 +340,22 @@
   }
 
   function getCanvasSize(dpi){
-    const horizontal = layoutSelect.value === "horizontal";
-    const pageWidth = Math.round((horizontal ? 297 : 210) * dpi / 25.4);
-    const pageHeight = Math.round((horizontal ? 210 : 297) * dpi / 25.4);
-    return {pageWidth, pageHeight, horizontal};
+    const landscape = orientationSelect.value === "landscape";
+    const pageWidth = Math.round((landscape ? 297 : 210) * dpi / 25.4);
+    const pageHeight = Math.round((landscape ? 210 : 297) * dpi / 25.4);
+    return {pageWidth, pageHeight, landscape};
   }
 
-  function getSlots(width, height, horizontal){
-    const pixelsPerMm = width / (horizontal ? 297 : 210);
+  function getSlots(width, height, landscape, sideBySide){
+    const pixelsPerMm = width / (landscape ? 297 : 210);
     const margin = Number(marginSelect.value) * pixelsPerMm;
     const gap = Number(gapSelect.value) * pixelsPerMm;
-    const slotWidth = horizontal ? (width - margin * 2 - gap) / 2 : width - margin * 2;
-    const slotHeight = horizontal ? height - margin * 2 : (height - margin * 2 - gap) / 2;
+    const slotWidth = sideBySide ? (width - margin * 2 - gap) / 2 : width - margin * 2;
+    const slotHeight = sideBySide ? height - margin * 2 : (height - margin * 2 - gap) / 2;
     if(slotWidth <= 0 || slotHeight <= 0) throw new Error("The selected margin and spacing leave no room on the A4 page.");
     return [0, 1].map(index => ({
-      x: margin + (horizontal ? index * (slotWidth + gap) : 0),
-      y: margin + (horizontal ? 0 : index * (slotHeight + gap)),
+      x: margin + (sideBySide ? index * (slotWidth + gap) : 0),
+      y: margin + (sideBySide ? 0 : index * (slotHeight + gap)),
       width: slotWidth,
       height: slotHeight
     }));
@@ -388,15 +396,16 @@
 
   function drawPreview(){
     if(!workspace.classList.contains("show")) return;
-    const horizontal = layoutSelect.value === "horizontal";
-    const aspect = horizontal ? 297 / 210 : 210 / 297;
+    const landscape = orientationSelect.value === "landscape";
+    const sideBySide = arrangementSelect.value === "side-by-side";
+    const aspect = landscape ? 297 / 210 : 210 / 297;
     preview.width = Math.round(previewLongEdge * aspect);
     preview.height = previewLongEdge;
-    const slots = getSlots(preview.width, preview.height, horizontal);
+    const slots = getSlots(preview.width, preview.height, landscape, sideBySide);
     previewContext.fillStyle = "#FFFFFF";
     previewContext.fillRect(0, 0, preview.width, preview.height);
     sourcePages.forEach((source, side) => paintPage(previewContext, source, slots[side], positions[side], true, side));
-    if(horizontal){
+    if(sideBySide){
       previewContext.strokeStyle = "#9B9487";
       previewContext.setLineDash([8, 7]);
       previewContext.beginPath();
@@ -413,7 +422,7 @@
       previewContext.stroke();
       previewContext.setLineDash([]);
     }
-    layoutLabel.textContent = horizontal ? "Landscape" : "Portrait";
+    layoutLabel.textContent = `A4 ${landscape ? "Landscape" : "Portrait"} · ${sideBySide ? "Side by side" : "Up and down"}`;
   }
 
   async function createPdf(){
@@ -423,8 +432,9 @@
     setBusy(true);
     try{
       const dpi = Number(resolutionSelect.value);
-      const {pageWidth, pageHeight, horizontal} = getCanvasSize(dpi);
-      const slots = getSlots(pageWidth, pageHeight, horizontal);
+      const {pageWidth, pageHeight, landscape} = getCanvasSize(dpi);
+      const sideBySide = arrangementSelect.value === "side-by-side";
+      const slots = getSlots(pageWidth, pageHeight, landscape, sideBySide);
       const output = document.createElement("canvas");
       output.width = pageWidth;
       output.height = pageHeight;
@@ -440,14 +450,14 @@
       output.height = 0;
       const {PDFDocument} = PDFLib;
       const pdf = await PDFDocument.create();
-      const page = pdf.addPage(horizontal ? [841.89, 595.28] : [595.28, 841.89]);
+      const page = pdf.addPage(landscape ? [841.89, 595.28] : [595.28, 841.89]);
       const image = await pdf.embedJpg(imageBytes);
       page.drawImage(image, {x: 0, y: 0, width: page.getWidth(), height: page.getHeight()});
       const bytes = await pdf.save();
       downloadUrl = URL.createObjectURL(new Blob([bytes], {type: "application/pdf"}));
       downloadBtn.href = downloadUrl;
       downloadBtn.download = `${sourceFile.name.replace(/\.pdf$/i, "")}-id-card-a4.pdf`;
-      resultInfo.textContent = `A4 ${horizontal ? "landscape" : "portrait"} · ${dpi} DPI · One page`;
+      resultInfo.textContent = `A4 ${landscape ? "landscape" : "portrait"}, ${sideBySide ? "side by side" : "up and down"} · ${dpi} DPI · One page`;
       result.classList.add("show");
     }catch(error){
       console.error(error);
@@ -482,7 +492,7 @@
   }
 
   function pointInSlot(x, y){
-    const slots = getSlots(preview.width, preview.height, layoutSelect.value === "horizontal");
+    const slots = getSlots(preview.width, preview.height, orientationSelect.value === "landscape", arrangementSelect.value === "side-by-side");
     return slots.findIndex(slot => x >= slot.x && x <= slot.x + slot.width && y >= slot.y && y <= slot.y + slot.height);
   }
 
@@ -513,7 +523,7 @@
   dropzone.addEventListener("drop", event => {
     if(!isBusy) loadPdf(event.dataTransfer.files[0]);
   });
-  [layoutSelect, marginSelect, gapSelect].forEach(control => control.addEventListener("change", () => {
+  [orientationSelect, arrangementSelect, marginSelect, gapSelect].forEach(control => control.addEventListener("change", () => {
     releaseDownload();
     drawPreview();
   }));
@@ -559,7 +569,7 @@
   preview.addEventListener("pointermove", event => {
     if(!activeDrag) return;
     const point = pointerPosition(event);
-    const slot = getSlots(preview.width, preview.height, layoutSelect.value === "horizontal")[activeDrag.side];
+    const slot = getSlots(preview.width, preview.height, orientationSelect.value === "landscape", arrangementSelect.value === "side-by-side")[activeDrag.side];
     positions[activeDrag.side].x += (point.x - activeDrag.x) / slot.width;
     positions[activeDrag.side].y += (point.y - activeDrag.y) / slot.height;
     activeDrag.x = point.x;
